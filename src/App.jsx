@@ -19,6 +19,17 @@ function App() {
     console.log(items);
   }, []);
 
+  const showJoint = async () => {
+    setIsJointActive(true);
+    setIsOverviewActive(false);
+    await invoke("get_items").then(items => setItems(items));
+  }
+  const showOverview = async () => {
+    setIsJointActive(false);
+    setIsOverviewActive(true);
+    setItems([]);
+  }
+
   return (
     <>
       <div className="page">
@@ -26,13 +37,13 @@ function App() {
           <h1 className="site-nav-title">Ariculation</h1>
           <div className="hr-divider"></div>
           <div className="site-nav-links">
-          <button className={isOverviewActive ? "site-nav-link-active" : "site-nav-link"} onClick={() => {setIsOverviewActive(true); setIsJointActive(false)}}>
+          <button className={isOverviewActive ? "site-nav-link-active" : "site-nav-link"} onClick={showOverview}>
               <div className="nav-link-button-icon">
                 <i className="fa-solid fa-chart-line"></i>
               </div>
               <div className="nav-link-button-text">Overview</div>
             </button>
-            <button className={isJointActive ? "site-nav-link-active" : "site-nav-link"} onClick={() => {setIsJointActive(true); setIsOverviewActive(false)}}>
+            <button className={isJointActive ? "site-nav-link-active" : "site-nav-link"} onClick={showJoint}>
                 <div className="nav-link-button-icon">
                   <i className="fa-solid fa-arrows-to-circle"></i>
                 </div>
@@ -49,7 +60,7 @@ function App() {
           </h2>
           <button className="add-item-button" onClick={() => setShowAddItemPopup("block")}>+</button>
           <table className="item-list">
-            <thead>
+            <thead className="item-list-header">
               <tr>
                 <th>Name</th>
                 <th>Category</th>

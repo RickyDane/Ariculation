@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 function AddItemPopup(props) {
   const [itemName, setItemName] = useState("");
@@ -26,7 +27,7 @@ function AddItemPopup(props) {
   const handleSplitChange = (e) => {
     setItemSplit(e.target.checked);
   }
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     if (!itemName.length > 0) { return; }
     if (!itemCategory.length > 0) { return; }
     if (!itemPerson.length > 0) { return; }
@@ -40,6 +41,7 @@ function AddItemPopup(props) {
       price: itemPrice,
       split: itemSplit
     }
+    await invoke("add_item", { name: newItem.name, description: newItem.description, price: parseFloat(newItem.price), user: newItem.user, category: newItem.category, split: newItem.split });
     props.setItems([...props.items, newItem]);
     props.setShow("none");
   }
@@ -69,7 +71,7 @@ function AddItemPopup(props) {
             </div>
           </div>
           <div className="add-item-popup-bottom-body">
-            <input type="number" className="add-item-popup-input add-item-popup-input-price" value={itemPrice} onChange={handlePriceChange} placeholder="0,00 €" />
+            <input type="number" className="add-item-popup-input add-item-popup-input-price" value={parseFloat(itemPrice).toFixed(2)} onChange={handlePriceChange} placeholder="0,00 €" />
           </div>
           <div className="add-item-popup-footer">
             <div className="add-item-popup-checkbox-container">

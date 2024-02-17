@@ -67,7 +67,7 @@ function EditItemPopup(props) {
               </div>
             </div>
             <div className="add-item-popup-bottom-body">
-              <input type="number" className="add-item-popup-input add-item-popup-input-price" value={itemPrice} onChange={handlePriceChange} placeholder="0,00 €" />
+              <input type="number" className="add-item-popup-input add-item-popup-input-price" value={parseFloat(itemPrice).toFixed(2)} onChange={handlePriceChange} placeholder="0,00 €" />
             </div>
             <div className="add-item-popup-footer">
               <div className="add-item-popup-checkbox-container">

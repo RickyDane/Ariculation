@@ -21,7 +21,7 @@ html, body {
     align-items: center;
     background-color: #1F2124;
     color: white;
-    width: 250px;
+    width: 225px;
     height: 100vh;
 }
 .site-nav-title {
@@ -38,7 +38,7 @@ html, body {
     display: flex;
     flex-flow: column;
     align-items: flex-start;
-    padding: 10px 0;
+    padding: 20px 0;
     gap: 5px;
 }
 .site-nav-link {
@@ -109,7 +109,7 @@ html, body {
 }
 .main-container {
     position: relative;
-    width: calc(100% - 250px);
+    width: calc(100% - 225px);
 }
 .monthly-money {
     display: flex;
@@ -187,6 +187,14 @@ html, body {
 }
 .item-list-footer > td {
     padding: 10px 0;
+}
+.item-list-header {
+    background-color: #1F2124;
+    border-radius: 5px;
+}
+.item-list-header > tr > th {
+    border-radius: 5px;
+    width: 75px;
 }
 .add-item-popup {
     position: absolute;
