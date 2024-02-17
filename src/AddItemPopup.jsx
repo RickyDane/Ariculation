@@ -39,9 +39,9 @@ function AddItemPopup(props) {
       description: itemDescription,
       user: itemPerson,
       price: itemPrice,
-      split: itemSplit
+      is_split: itemSplit
     }
-    await invoke("add_item", { name: newItem.name, description: newItem.description, price: parseFloat(newItem.price), user: newItem.user, category: newItem.category, split: newItem.split });
+    await invoke("add_item", { name: newItem.name, description: newItem.description, price: newItem.price.toString(), user: newItem.user, category: newItem.category, split: newItem.is_split });
     props.setItems([...props.items, newItem]);
     props.setShow("none");
   }
@@ -71,7 +71,7 @@ function AddItemPopup(props) {
             </div>
           </div>
           <div className="add-item-popup-bottom-body">
-            <input type="number" className="add-item-popup-input add-item-popup-input-price" value={parseFloat(itemPrice).toFixed(2)} onChange={handlePriceChange} placeholder="0,00 €" />
+            <input type="number" className="add-item-popup-input add-item-popup-input-price" value={itemPrice} onChange={handlePriceChange} placeholder="0,00 €" />
           </div>
           <div className="add-item-popup-footer">
             <div className="add-item-popup-checkbox-container">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 function EditItemPopup(props) {
   const [itemName, setItemName] = useState(props.item.name);
@@ -6,7 +7,7 @@ function EditItemPopup(props) {
     const [itemPerson, setItemPerson] = useState(props.item.person);
     const [itemDescription, setItemDescription] = useState(props.item.description);
     const [itemPrice, setItemPrice] = useState(props.item.price);
-    const [itemSplit, setItemSplit] = useState(props.item.split);
+    const [itemSplit, setItemSplit] = useState(props.item.is_split);
     const handleNameChange = (e) => {
       setItemName(e.target.value);
     }
@@ -25,18 +26,20 @@ function EditItemPopup(props) {
     const handleSplitChange = (e) => {
       setItemSplit(e.target.checked);
     }
-    const handleEditItem = () => {
+    const handleEditItem = async () => {
       let newItem = {
-        id: crypto.randomUUID(),
+        id: props.item.id,
         name: itemName,
         category: itemCategory,
         description: itemDescription,
         user: itemPerson,
         price: itemPrice,
-        split: itemSplit
+        is_split: itemSplit
       }
       props.setItems(props.items.map(item => item.id === props.item.id ? newItem : item));
       props.setShow("none");
+      console.log(typeof newItem.price, parseFloat(newItem.price).toFixed(2));
+      await invoke("update_item", { id: newItem.id, name: newItem.name, description: newItem.description, price: newItem.price.toString(), user: newItem.user, category: newItem.category, split: newItem.is_split != null ? newItem.is_split : false });
     }
     const refreshPopup = () => {
       setItemName(props.item.name);
@@ -44,7 +47,7 @@ function EditItemPopup(props) {
       setItemPerson(props.item.user);
       setItemDescription(props.item.description);
       setItemPrice(props.item.price);
-      setItemSplit(props.item.split);
+      setItemSplit(props.item.is_split);
     }
 
     useEffect(() => {

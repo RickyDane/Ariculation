@@ -110,33 +110,27 @@ html, body {
 .main-container {
     position: relative;
     width: calc(100% - 225px);
-}
-.monthly-money {
-    display: flex;
-    flex-flow: row;
-    align-items: center;
-    color: white;
-    font-weight: lighter;
-    position: absolute;
-    top: 10px;
-    left: 20px;
+    overflow-y: auto;
+    height: 100vh;
 }
 .monthly-money-money {
     display: block;
-    color: gray !important;
+    color: white !important;
     background-color: transparent;
     border: none;
-    width: 100%;
+    width: 75px;
     font-size: 1em;
-    text-align: right;
+    text-align: left;
+    padding: 0 5px;
 }
 .item-list {
     width: 90%;
     margin: 0 auto;
-    margin-top: 5vw;
+    margin-top: 10px;
     padding: 20px;
     color: white;
     text-align: center;
+    padding-bottom: 50px;
 }
 .item-list > thead > tr > th {
     padding: 5px;
@@ -152,6 +146,10 @@ html, body {
 }
 .list-item > td {
     padding: 5px;
+    border-radius: 5px;
+}
+.list-item:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 .list-item:hover {
     background-color: rgba(0, 0, 0, 0.1);
@@ -329,4 +327,16 @@ html, body {
     font-size: 0.8em;
     font-weight: lighter;
     cursor: pointer;
+}
+.page-sum-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: gray;
+    position: fixed;
+    bottom: 0;
+    left: 225px;
+    right: 0;
+    background-color: #1F2124;
+    padding: 10px;
 }

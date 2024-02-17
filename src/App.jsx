@@ -29,6 +29,10 @@ function App() {
     setIsOverviewActive(true);
     setItems([]);
   }
+  const deleteItem = async (id) => {
+    await invoke("delete_item", { id: id });
+    setItems(items.filter(item => item.id != id));
+  }
 
   return (
     <>
@@ -52,12 +56,6 @@ function App() {
           </div>
         </div>
         <div className="main-container">
-          <h2 className="monthly-money">
-            <span style={{fontSize: "0.8em"}}>{"Start: "}</span>
-            <div style={{width: "100px", maxWidth: "fit-content"}}>
-              <input type="text" className="monthly-money-money" value={monthlyMoney} onChange={(e) => {e.keyCode == 13 ? e.target.blur() : setMonthlyMoney(e.target.value.length > 0 ? e.target.value : 0)}} />
-            </div>
-          </h2>
           <button className="add-item-button" onClick={() => setShowAddItemPopup("block")}>+</button>
           <table className="item-list">
             <thead className="item-list-header">
@@ -77,27 +75,41 @@ function App() {
                   <td>{item.category}</td>
                   <td>{parseFloat(item.price).toFixed(2).toString().replace(".", ",")} {"€"}</td>
                   <td>{item.user}</td>
-                  <td>{item.split == true ? "True" : "-"}</td>
+                  <td>{item.is_split == true ? "True" : "-"}</td>
                   <td className="item-action-buttons">
                     <button className="item-action-button" onClick={() => { setShowEditItemPopup("block"); setEditItem(item)}}>
                       <i className="fa-solid fa-pencil"></i>
                     </button>
-                    <button className="item-action-button item-action-button-delete" onClick={() => setItems(items.filter((i) => i !== item))}>
+                    <button className="item-action-button item-action-button-delete" onClick={() => deleteItem(item.id)}>
                       <i className="fa-solid fa-trash"></i>
                     </button>
                   </td>
                 </tr>
               ))}
-              <tr className="item-list-footer">
-                <td></td>
-                <td></td>
-                <td style={{borderTop: "1px solid #1F2124"}}>{(parseFloat(monthlyMoney) + items.reduce((acc, item) => parseFloat(acc) + parseFloat(item.price), 0)).toFixed(2).toString().replace(".", ",")} {"€"}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-              </tr>
             </tbody>
           </table>
+          <div className="page-sum-footer">
+            <div style={{display: "flex"}}>
+              {"Start: "}
+              <input type="text" className="monthly-money-money" value={monthlyMoney} onChange={(e) => {e.key == "G" ? e.target.blur() : setMonthlyMoney(e.target.value.length > 0 ? e.target.value : 0)}} />
+            </div>
+            <div style={{display: "flex", gap: "5px"}}>
+              {items.length > 0 ? "Total:" : "No items"}
+              <p style={{color: "white"}}>
+                {items.length > 0 ?
+                  (parseFloat(monthlyMoney)
+                  +
+                  items.filter(item => item.is_split == true).reduce((pre, item) => parseFloat(pre) + parseFloat(item.price) / 2, 0)
+                  +
+                  items.filter(item => item.is_split == false).reduce((acc, item) => parseFloat(acc) + parseFloat(item.price), 0)).toFixed(2).toString().replace(".", ",")
+                  +
+                  " €"
+                  :
+                  ""
+                }
+              </p>
+            </div>
+          </div>
         </div>
       </div>
       <AddItemPopup setItems={setItems} items={items} setShow={setShowAddItemPopup} show={showAddItemPopup} />
