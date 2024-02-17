@@ -3,41 +3,21 @@ import { useEffect, useState } from "react";
 import "./styles.css";
 import "./font-awesome/js/all.min.js";
 import "./font-awesome/css/all.min.css";
-import AddItemPopup from "./Popups";
+import AddItemPopup from "./AddItemPopup";
+import EditItemPopup from "./EditItemPopup";
 
 function App() {
   const [items, setItems] = useState([]);
+  const [showAddItemPopup, setShowAddItemPopup] = useState("none");
+  const [showEditItemPopup, setShowEditItemPopup] = useState("none");
+  const [editItem, setEditItem] = useState({});
+  const [monthlyMoney, setMonthlyMoney] = useState(0);
+  const [isOverviewActive, setIsOverviewActive] = useState(true);
+  const [isJointActive, setIsJointActive] = useState(false);
 
-  let startItems = [
-    {
-      id: crypto.randomUUID(),
-      name: "Item 1",
-      description: "This is item 1",
-      user: "Ricky",
-      price: 100,
-    },
-    {
-      id: crypto.randomUUID(),
-      name: "Item 2",
-      description: "This is item 2",
-      user: "Adinda",
-      price: 200,
-    },
-    {
-      id: crypto.randomUUID(),
-      name: "Item 3",
-      description: "This is item 3",
-      user: "Adinda",
-      price: 300,
-    },
-    {
-      id: crypto.randomUUID(),
-      name: "Item 4",
-      description: "This is item 4",
-      user: "Adinda",
-      price: 400,
-    }
-  ];
+  useEffect(() => {
+    console.log(items);
+  }, []);
 
   return (
     <>
@@ -46,13 +26,13 @@ function App() {
           <h1 className="site-nav-title">Ariculation</h1>
           <div className="hr-divider"></div>
           <div className="site-nav-links">
-            <button className="site-nav-link" onClick={() => setItems(startItems)}>
+          <button className={isOverviewActive ? "site-nav-link-active" : "site-nav-link"} onClick={() => {setIsOverviewActive(true); setIsJointActive(false)}}>
               <div className="nav-link-button-icon">
                 <i className="fa-solid fa-chart-line"></i>
               </div>
               <div className="nav-link-button-text">Overview</div>
             </button>
-            <button className="site-nav-link">
+            <button className={isJointActive ? "site-nav-link-active" : "site-nav-link"} onClick={() => {setIsJointActive(true); setIsOverviewActive(false)}}>
                 <div className="nav-link-button-icon">
                   <i className="fa-solid fa-arrows-to-circle"></i>
                 </div>
@@ -61,39 +41,56 @@ function App() {
           </div>
         </div>
         <div className="main-container">
-          <button className="add-item-button">+</button>
+          <h2 className="monthly-money">
+            <span style={{fontSize: "0.8em"}}>{"Start: "}</span>
+            <div style={{width: "100px", maxWidth: "fit-content"}}>
+              <input type="text" className="monthly-money-money" value={monthlyMoney} onChange={(e) => {e.keyCode == 13 ? e.target.blur() : setMonthlyMoney(e.target.value.length > 0 ? e.target.value : 0)}} />
+            </div>
+          </h2>
+          <button className="add-item-button" onClick={() => setShowAddItemPopup("block")}>+</button>
           <table className="item-list">
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Description</th>
+                <th>Category</th>
                 <th>Price</th>
                 <th>User</th>
+                <th>Split</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="item">
+                <tr key={item.id} className="list-item">
                   <td>{item.name}</td>
-                  <td>{item.description}</td>
-                  <td>{item.price}</td>
+                  <td>{item.category}</td>
+                  <td>{parseFloat(item.price).toFixed(2).toString().replace(".", ",")} {"€"}</td>
                   <td>{item.user}</td>
+                  <td>{item.split == true ? "True" : "-"}</td>
                   <td className="item-action-buttons">
-                    <button className="item-action-button" onClick={() => setItems(items.map((i) => i === item ? { ...i, name: prompt("Enter new name") } : i))}>
+                    <button className="item-action-button" onClick={() => { setShowEditItemPopup("block"); setEditItem(item)}}>
                       <i className="fa-solid fa-pencil"></i>
                     </button>
-                    <button className="item-action-button" onClick={() => setItems(items.filter((i) => i !== item))}>
+                    <button className="item-action-button item-action-button-delete" onClick={() => setItems(items.filter((i) => i !== item))}>
                       <i className="fa-solid fa-trash"></i>
                     </button>
                   </td>
                 </tr>
               ))}
+              <tr className="item-list-footer">
+                <td></td>
+                <td></td>
+                <td style={{borderTop: "1px solid #1F2124"}}>{(parseFloat(monthlyMoney) + items.reduce((acc, item) => parseFloat(acc) + parseFloat(item.price), 0)).toFixed(2).toString().replace(".", ",")} {"€"}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
-      <AddItemPopup />
+      <AddItemPopup setItems={setItems} items={items} setShow={setShowAddItemPopup} show={showAddItemPopup} />
+      <EditItemPopup setItems={setItems} items={items} item={editItem} setShow={setShowEditItemPopup} show={showEditItemPopup} />
     </>
   );
 }
