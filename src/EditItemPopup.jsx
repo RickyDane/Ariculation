@@ -27,7 +27,8 @@ function EditItemPopup(props) {
         price: itemPrice,
         is_split: itemSplit,
         user_id: itemPerson,
-        is_visible_on_user: itemVisOnUser
+        is_visible_on_user: itemVisOnUser,
+        listType: props.currentListType
       }
       await invoke("update_item", {
         id: newItem.id,
@@ -37,18 +38,19 @@ function EditItemPopup(props) {
         category: newItem.category,
         isSplit: newItem.is_split != null ? newItem.is_split : false,
         userId: parseInt(newItem.user_id),
-        isVisibleOnUser: newItem.is_visible_on_user != null ? newItem.is_visible_on_user : false
+        isVisibleOnUser: newItem.is_visible_on_user != null ? newItem.is_visible_on_user : false,
+        listType: parseInt(newItem.listType)
       });
 
       switch (props.currentView) {
         case "all":
-          await invoke("get_all_items").then(items => props.setItems(items));
+          await invoke("get_all_items", { listType: props.currentListType }).then(items => props.setItems(items));
           break;
         case "user":
-          await invoke("get_user_items", { userId: props.activeUserId }).then(items => props.setItems(items));
+          await invoke("get_user_items", { userId: props.activeUserId, listType: props.currentListType }).then(items => props.setItems(items));
           break;
         case "joint":
-          await invoke("get_items", { isSplit: true, isJoint: props.isJoint }).then(items => props.setItems(items));
+          await invoke("get_items", { isSplit: true, isJoint: props.isJoint, listType: props.currentListType }).then(items => props.setItems(items));
           break;
         default:
           console.log("Invalid view: ", props.currentView);
@@ -79,7 +81,7 @@ function EditItemPopup(props) {
               <div className="add-item-popup-left-body">
                 <input type="text" className="add-item-popup-input" value={itemName} onChange={handleNameChange} placeholder="Name" />
                 <input type="text" className="add-item-popup-input" value={itemCategory} onChange={handleCategoryChange} placeholder="Category" />
-                <select className="add-item-popup-select" value={itemPerson} onChange={handlePersonChange}>
+                <select className="item-select" value={itemPerson} onChange={handlePersonChange}>
                   {props.users.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
                   <option value="0">-</option>
                 </select>
@@ -94,12 +96,12 @@ function EditItemPopup(props) {
             <div className="add-item-popup-footer">
               <div className="add-item-popup-checkbox-container">
                 <div style={{display: "flex", alignItems: "center"}}>
-                  <input id="split-checkbox" type="checkbox" className="add-item-popup-checkbox" checked={itemSplit} onChange={handleSplitChange} />
-                  <label htmlFor="split-checkbox" className="add-item-popup-checkbox-label">Split</label>
+                  <input id="edit-split-checkbox" type="checkbox" className="add-item-popup-checkbox" checked={itemSplit} onChange={handleSplitChange} />
+                  <label htmlFor="edit-split-checkbox" className="add-item-popup-checkbox-label">Split</label>
                 </div>
                 <div style={{display: "flex", alignItems: "center"}}>
-                  <input id="user-vis-checkbox" type="checkbox" className="add-item-popup-checkbox" checked={itemVisOnUser} onChange={handleVisOnUserChange} />
-                  <label htmlFor="user-vis-checkbox" className="add-item-popup-checkbox-label">Visible on user</label>
+                  <input id="edit-user-vis-checkbox" type="checkbox" className="add-item-popup-checkbox" checked={itemVisOnUser} onChange={handleVisOnUserChange} />
+                  <label htmlFor="edit-user-vis-checkbox" className="add-item-popup-checkbox-label">Visible on user</label>
                 </div>
               </div>
               <div className="add-item-popup-button-container">

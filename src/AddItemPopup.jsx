@@ -32,18 +32,19 @@ function AddItemPopup(props) {
       isSplit: itemSplit,
       isJoint: props.isJoint,
       userId: parseInt(itemPerson),
-      isVisibleOnUser: itemVisOnUser
+      isVisibleOnUser: itemVisOnUser,
+      listType: parseInt(props.currentListType)
     });
 
     switch (props.currentView) {
       case "all":
-        await invoke("get_all_items").then(items => props.setItems(items));
+        await invoke("get_all_items", { listType: props.currentListType }).then(items => props.setItems(items));
         break;
       case "user":
-        await invoke("get_user_items", { userId: props.activeUserId }).then(items => props.setItems(items));
+        await invoke("get_user_items", { userId: props.activeUserId, listType: props.currentListType }).then(items => props.setItems(items));
         break;
       case "joint":
-        await invoke("get_items", { isSplit: true, isJoint: props.isJoint }).then(items => props.setItems(items));
+        await invoke("get_items", { isSplit: true, isJoint: props.isJoint, listType: parseInt(props.currentListType) }).then(items => props.setItems(items));
         break;
       default:
         console.log("Invalid view: ", props.currentView);
@@ -70,7 +71,7 @@ function AddItemPopup(props) {
             <div className="add-item-popup-left-body">
               <input type="text" className="add-item-popup-input" value={itemName} onChange={handleNameChange} placeholder="Name" />
               <input type="text" className="add-item-popup-input" value={itemCategory} onChange={handleCategoryChange} placeholder="Category" />
-              <select className="add-item-popup-select" value={itemPerson} onChange={handlePersonChange}>
+              <select className="item-select" value={itemPerson} onChange={handlePersonChange}>
                 {props.users.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
                 <option value="0">-</option>
               </select>

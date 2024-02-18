@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 
 function AddUserPopup(props) {
-  const [userName, setUserName] = useState("User");
+  const [userName, setUserName] = useState("");
   const [userMoney, setUserMoney] = useState(0);
 
   const handleNameChange = (e) => {
@@ -25,7 +25,7 @@ function AddUserPopup(props) {
   }
 
   useEffect(() => {
-    setUserName("User");
+    setUserName("");
     setUserMoney(0);
   }, [props.show]);
 
@@ -38,7 +38,10 @@ function AddUserPopup(props) {
             <input type="text" className="add-item-popup-input" value={userName} onChange={handleNameChange} placeholder="Name" />
           </div>
           <div className="add-item-popup-bottom-body">
-            <input type="number" className="add-item-popup-input add-item-popup-input-price" value={userMoney} onChange={handleMoneyChange} placeholder="0,00 €" />
+            <div>
+              <p style={{color: "gray", fontWeight: "lighter", fontSize: "0.9em"}}>Start money</p>
+              <input type="number" className="add-item-popup-input add-item-popup-input-price" value={userMoney} onChange={handleMoneyChange} placeholder="0,00 €" />
+            </div>
           </div>
           <div className="add-item-popup-footer">
             <div></div>

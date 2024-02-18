@@ -7,7 +7,7 @@
 }
 
 html, body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: sans-serif;
     background-color: #2E2E2E;
 }
 
@@ -24,6 +24,7 @@ html, body {
     width: 225px;
     height: 100vh;
     position: relative;
+    border-right: 1px solid #3b3b3b;
 }
 .site-nav-title {
     padding: 20px 0;
@@ -92,42 +93,77 @@ html, body {
     font-size: 0.75em;
     color: rgba(255, 207, 134);
 }
-.add-user-button {
+.site-nav-settings-bar {
+    background-color: #2E2E2E;
     position: absolute;
     left: 10px;
     bottom: 10px;
     right: 10px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    overflow: hidden;
+}
+.add-user-button {
+    width: 100%;
     padding: 10px;
     font-size: 1em;
-    background-color: #2E2E2E;
     border: none;
     color: white;
-    border-radius: 5px;
     cursor: pointer;
     font-weight: lighter;
+    background-color: transparent;
 }
 .add-user-button:hover {
     background-color: #3b3b3b;
 }
-.add-item-button {
-    background-color: #1F2124;
+.site-nav-settings-button {
+    width: 48px;
+    padding: 10px;
+    font-size: 1em;
     border: none;
-    width: 40px;
-    height: 40px;
+    color: white;
+    cursor: pointer;
+    font-weight: lighter;
+    background-color: #333;
+}
+.site-nav-settings-button:hover {
+    background-color: #3b3b3b;
+}
+.add-item-button {
+    background-color: #2E2E2E;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: white;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: lighter;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+.add-item-button:hover {
+    background-color: #3b3b3b;
+}
+.remove-joint-entries {
+    background-color: #2E2E2E;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     border-radius: 5px;
-    font-size: 1.25em;
+    font-size: 1em;
+    padding: 5px 10px;
     font-weight: lighter;
-    position: fixed;
-    top: 10px;
-    right: 10px;
     cursor: pointer;
+    display: flex;
+    gap: 10px;
 }
-.add-item-button:hover {
-    background-color: #1F2327;
+.remove-joint-entries:hover {
+    background-color: #3b3b3b;
 }
 .main-container {
     position: relative;
@@ -158,14 +194,78 @@ html, body {
     text-align: left;
     padding: 0 5px;
 }
+.toolbar {
+    width: 100%;
+    height: 45px;
+    display: flex;
+    flex-flow: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    background-color: rgba(0, 0, 0, 0.25);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid #3b3b3b;
+    position: sticky;
+    top: 0;
+}
+.list-type-container {
+    display: flex;
+    align-items: center;
+    background-color: #2E2E2E;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.list-type-select {
+    width: 100px;
+    padding: 10px !important;
+    outline: none;
+}
+.add-list-button {
+    width: 32px;
+    height: 100%;
+    background-color: #333;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+.add-list-button:hover {
+    background-color: #3b3b3b;
+}
+.text-input {
+    color: white !important;
+    background-color: #2E2E2E;
+    border: none;
+    width: 200px;
+    font-size: 1em;
+    text-align: left;
+    padding: 7.5px 10px;
+    border-radius: 5px;
+    font-weight: lighter;
+}
+.text-input-transparent {
+    color: white !important;
+    background-color: transparent;
+    border: none;
+    width: 200px;
+    font-size: 1em;
+    text-align: left;
+    padding: 10px;
+    border-radius: 5px;
+}
 .item-list {
-    width: 90%;
+    width: 100%;
     margin: 0 auto;
-    margin-top: 10px;
-    padding: 20px;
     color: white;
     text-align: center;
-    padding-bottom: 75px;
+    border-collapse: collapse;
+    margin-bottom: 55px;
+}
+.item-list > tbody > tr  {
+    border-bottom: 1px solid #1F2327;
+}
+.item-list > tbody > tr:last-of-type  {
+    border-bottom: none;
 }
 .item-list > thead > tr > th {
     padding: 5px;
@@ -173,7 +273,6 @@ html, body {
     width: 100px;
 }
 .list-item {
-    border-radius: 5px;
     color: white;
     font-size: 0.8em;
     font-weight: lighter;
@@ -182,7 +281,6 @@ html, body {
 }
 .list-item > td {
     padding: 5px;
-    border-radius: 5px;
     width: 100px;
     margin: 0 auto;
 }
@@ -195,46 +293,40 @@ html, body {
 .item-action-buttons {
     display: flex;
     justify-content: center;
-    gap: 2px;
-    width: 100% !important;
     background-color: #2E2E2E !important;
+    border-radius: 5px;
+    overflow: hidden;
+    width: 100px;
+    margin: 0 auto;
 }
 .item-action-button {
     background-color: #1F2124;
     border: none;
-    width: 30px;
+    width: 100%;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    border-radius: 5px;
     font-size: 1em;
     font-weight: lighter;
     cursor: pointer;
     transition: background-color 0.1s;
 }
 .item-action-button:hover {
-    background-color: #1F2327;
+    background-color: #333;
 }
 .item-action-button-delete:hover {
     background-color: #3B2327;
 }
-.item-list-footer {
-    font-size: 0.8em;
-}
-.item-list-footer > td {
-    padding: 10px 0;
-}
 .item-list-header {
     background-color: #1F2124;
-    border-radius: 5px;
     position: sticky;
-    top: -2px;
+    top: 45px;
 }
 .item-list-header > tr > th {
-    border-radius: 5px;
     width: 75px;
+    height: 35px;
 }
 .add-item-popup {
     position: absolute;
@@ -311,9 +403,8 @@ html, body {
     margin: 0 auto;
     text-align: center;
 }
-.add-item-popup-select {
+.item-select {
     cursor: pointer;
-    width: 100%;
     border: none;
     padding: 10px;
     background-color: #2E2E2E;
@@ -355,6 +446,7 @@ html, body {
     background-color: transparent;
     cursor: pointer;
     color: white;
+    transition: 0.1s ease;
 }
 .add-item-popup-button-cancel {
     color: #FF6B6B;
@@ -393,7 +485,8 @@ html, body {
     left: 235px;
     right: 10px;
     background-color: rgba(0, 0, 0, 0.25);
-    padding: 10px;
+    padding: 5px 10px;
     border-radius: 5px;
     -webkit-backdrop-filter: blur(20px);
+    min-height: 35px;
 }
