@@ -8,12 +8,14 @@ import AddItemPopup from "./AddItemPopup";
 import EditItemPopup from "./EditItemPopup";
 import AddUserPopup from "./AddUserPopup";
 import QuestionPopup from "./QuestionPopup.jsx";
+import TooltipInput from "./TooltipInput";
 
 function App() {
   const [items, setItems] = useState([]);
   const [showAddItemPopup, setShowAddItemPopup] = useState("none");
   const [showEditItemPopup, setShowEditItemPopup] = useState("none");
   const [showAddUserPopup, setShowAddUserPopup] = useState("none");
+  const [showTooltipInput, setShowTooltipInput] = useState("none");
   const [editItem, setEditItem] = useState({});
   const [monthlyMoney, setMonthlyMoney] = useState(0);
   const [isAllItemsActive, setIsAllItemsActive] = useState(true);
@@ -175,7 +177,7 @@ function App() {
                 <select className="list-type-select item-select" value={currentListType} onChange={(e) => handleChangeListType(e)}>
                   {listTypes.map((listType) => (<option key={listType.id} value={listType.id}>{listType.name}</option>))}
                 </select>
-                <button className="add-list-button"><i class="fa-solid fa-plus"></i></button>
+                <button className="add-list-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-circle-plus"></i></button>
               </div>
             </div>
           </div>
@@ -282,6 +284,7 @@ function App() {
         confirmFunction={confirmFunction}
         msg={questionPopupMsg}
         item={currentItem} />
+      <TooltipInput setShow={setShowTooltipInput} show={showTooltipInput} />
     </>
   );
 }

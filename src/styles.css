@@ -29,7 +29,7 @@ html, body {
 .site-nav-title {
     padding: 20px 0;
     text-align: center;
-    font-weight: lighter;
+    font-weight: 300;
     cursor: pointer;
 }
 .hr-divider {
@@ -54,7 +54,7 @@ html, body {
     text-decoration: none;
     color: white;
     font-size: 1.35em;
-    font-weight: lighter;
+    font-weight: 300;
     padding: 7.5px 25px 7.5px 7.5px;
     border-radius: 15px;
     cursor: pointer;
@@ -73,7 +73,7 @@ html, body {
         text-decoration: none;
         color: white;
         font-size: 1.35em;
-        font-weight: lighter;
+        font-weight: 300;
         padding: 7.5px 25px 7.5px 7.5px;
         border-radius: 15px;
         cursor: pointer;
@@ -111,7 +111,7 @@ html, body {
     border: none;
     color: white;
     cursor: pointer;
-    font-weight: lighter;
+    font-weight: 300;
     background-color: transparent;
 }
 .add-user-button:hover {
@@ -124,7 +124,7 @@ html, body {
     border: none;
     color: white;
     cursor: pointer;
-    font-weight: lighter;
+    font-weight: 300;
     background-color: #333;
 }
 .site-nav-settings-button:hover {
@@ -140,7 +140,7 @@ html, body {
     color: white;
     border-radius: 5px;
     font-size: 1em;
-    font-weight: lighter;
+    font-weight: 300;
     cursor: pointer;
     padding: 5px 10px;
 }
@@ -157,7 +157,7 @@ html, body {
     border-radius: 5px;
     font-size: 1em;
     padding: 5px 10px;
-    font-weight: lighter;
+    font-weight: 300;
     cursor: pointer;
     display: flex;
     gap: 10px;
@@ -241,7 +241,7 @@ html, body {
     text-align: left;
     padding: 7.5px 10px;
     border-radius: 5px;
-    font-weight: lighter;
+    font-weight: 300;
 }
 .text-input-transparent {
     color: white !important;
@@ -275,7 +275,7 @@ html, body {
 .list-item {
     color: white;
     font-size: 0.8em;
-    font-weight: lighter;
+    font-weight: 300;
     transition: background-color 0.1s;
     cursor: default;
 }
@@ -309,7 +309,7 @@ html, body {
     justify-content: center;
     color: white;
     font-size: 1em;
-    font-weight: lighter;
+    font-weight: 300;
     cursor: pointer;
     transition: background-color 0.1s;
 }
@@ -345,7 +345,7 @@ html, body {
 }
 .add-item-popup-title {
     font-size: 1.5em;
-    font-weight: lighter;
+    font-weight: 300;
     color: white;
     padding-bottom: 10px;
 }
@@ -360,7 +360,7 @@ html, body {
     background-color: #2E2E2E;
     color: white;
     font-size: 0.8em;
-    font-weight: lighter;
+    font-weight: 300;
 }
 .add-item-popup-body {
     width: 100%;
@@ -395,7 +395,7 @@ html, body {
     background-color: #2E2E2E;
     color: white;
     font-size: 0.8em;
-    font-weight: lighter;
+    font-weight: 300;
     resize: none;
 }
 .add-item-popup-input-price {
@@ -435,7 +435,7 @@ html, body {
     color: white;
     border-radius: 5px;
     font-size: 1em;
-    font-weight: lighter;
+    font-weight: 300;
     cursor: pointer;
     transition: background-color 0.1s;
     overflow: hidden;
@@ -472,7 +472,7 @@ html, body {
 .add-item-popup-checkbox-label {
     color: white;
     font-size: 0.8em;
-    font-weight: lighter;
+    font-weight: 300;
     cursor: pointer;
 }
 .page-sum-footer {
@@ -489,4 +489,20 @@ html, body {
     border-radius: 5px;
     -webkit-backdrop-filter: blur(20px);
     min-height: 35px;
+}
+
+.tooltip-input {
+    width: fit-content;
+    padding: 5px;
+    height: fit-content;
+    box-shadow: 0px 0px 10px 1px rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    background-color: #2E2E2E;
+    z-index: 100;
 }
