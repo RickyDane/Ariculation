@@ -9,7 +9,13 @@ fn main() {
             add_item,
             get_items,
             update_item,
-            delete_item
+            delete_item,
+            get_users,
+            add_user,
+            get_all_items,
+            get_user_items,
+            update_user,
+            get_user
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -24,8 +30,9 @@ struct Item {
     category: String,
     description: String,
     price: f32,
-    user: String,
     is_split: bool,
+    is_visible_on_user: bool,
+    user_id: i32
 }
 
 async fn get_db_connection() -> MySqlPool {
@@ -33,24 +40,37 @@ async fn get_db_connection() -> MySqlPool {
 }
 
 #[tauri::command]
-async fn add_item(name: String, description: String, price: String, user: String, category: String, split: bool) {
-    println!("Name: {}, Desc: {}, Price: {}, User: {}, Cat: {}, IsSplit: {}", &name, &description, &price, &user, &category, &split);
+async fn add_item(name: String, description: String, price: String, category: String, is_split: bool, is_joint: bool, user_id: i32, is_visible_on_user: bool) {
     let conn = get_db_connection().await;
-    sqlx::query("INSERT INTO tbl_items (name, category, description, price, user, is_split, last_modified) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO tbl_items (name, category, description, price, is_split, is_joint, user_id, last_modified, is_visible_on_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(name)
         .bind(category)
         .bind(description)
         .bind(price.parse::<f32>().unwrap())
-        .bind(user)
-        .bind(split)
+        .bind(is_split)
+        .bind(is_joint)
+        .bind(user_id)
         .bind(Local::now().to_string())
+        .bind(is_visible_on_user)
         .execute(&conn)
         .await
         .unwrap();
 }
 
 #[tauri::command]
-async fn get_items() -> Vec<Item> {
+async fn get_items(is_split: bool, is_joint: bool) -> Vec<Item> {
+    let conn = get_db_connection().await;
+    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE is_joint = ? OR is_split = ?")
+        .bind(is_joint)
+        .bind(is_split)
+        .fetch_all(&conn)
+        .await
+        .unwrap();
+    return items;
+}
+
+#[tauri::command]
+async fn get_all_items() -> Vec<Item> {
     let conn = get_db_connection().await;
     let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items")
         .fetch_all(&conn)
@@ -60,16 +80,17 @@ async fn get_items() -> Vec<Item> {
 }
 
 #[tauri::command]
-async fn update_item(id: i32, name: String, description: String, price: String, user: String, category: String, split: bool) {
+async fn update_item(id: i32, name: String, description: String, price: String, category: String, is_split: bool, user_id: i32, is_visible_on_user: bool) {
     let conn = get_db_connection().await;
-    sqlx::query("UPDATE tbl_items SET name = ?, category = ?, description = ?, price = ?, user = ?, is_split = ?, last_modified = ? WHERE id = ?")
+    sqlx::query("UPDATE tbl_items SET name = ?, category = ?, description = ?, price = ?, is_split = ?, last_modified = ?, is_visible_on_user = ?, user_id = ? WHERE id = ?")
         .bind(name)
         .bind(category)
         .bind(description)
         .bind(price.parse::<f32>().unwrap())
-        .bind(user)
-        .bind(split)
+        .bind(is_split)
         .bind(Local::now().to_string())
+        .bind(is_visible_on_user)
+        .bind(user_id)
         .bind(id)
         .execute(&conn)
         .await
@@ -84,4 +105,72 @@ async fn delete_item(id: i32) {
         .execute(&conn)
         .await
         .unwrap();
+}
+
+#[derive(Debug)]
+#[derive(Serialize)]
+#[derive(sqlx::FromRow)]
+struct User {
+    id: i32,
+    name: String,
+    start_money: f32,
+    last_modified: String,
+}
+
+#[tauri::command]
+async fn get_users() -> Vec<User> {
+    let conn = get_db_connection().await;
+    let users = sqlx::query_as::<_, User>("SELECT * FROM tbl_user")
+        .fetch_all(&conn)
+        .await
+        .unwrap();
+    return users;
+}
+
+#[tauri::command]
+async fn add_user(name: String, start_money: String) {
+    let conn = get_db_connection().await;
+    sqlx::query("INSERT INTO tbl_user (name, start_money, last_modified) VALUES (?, ?, ?)")
+        .bind(name)
+        .bind(start_money.parse::<f32>().unwrap())
+        .bind(Local::now().to_string())
+        .execute(&conn)
+        .await
+        .unwrap();
+}
+
+#[tauri::command]
+async fn get_user_items(user_id: i32) -> Vec<Item> {
+    let conn = get_db_connection().await;
+    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE user_id = ? AND is_visible_on_user = true OR is_split = true")
+        .bind(user_id)
+        .fetch_all(&conn)
+        .await
+        .unwrap();
+    return items;
+}
+
+#[tauri::command]
+async fn update_user(user_id: i32, name: String, start_money: String) {
+    println!("Name: {}, Start Money: {}", &name, &start_money);
+    let conn = get_db_connection().await;
+    sqlx::query("UPDATE tbl_user SET name = ?, start_money = ?, last_modified = ? WHERE id = ?")
+        .bind(name)
+        .bind(start_money.parse::<f32>().unwrap())
+        .bind(Local::now().to_string())
+        .bind(user_id)
+        .execute(&conn)
+        .await
+        .unwrap();
+}
+
+#[tauri::command]
+async fn get_user(user_id: i32) -> User {
+    let conn = get_db_connection().await;
+    let user = sqlx::query_as::<_, User>("SELECT * FROM tbl_user WHERE id = ?")
+        .bind(user_id)
+        .fetch_one(&conn)
+        .await
+        .unwrap();
+    return user;
 }

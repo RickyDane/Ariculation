@@ -23,11 +23,13 @@ html, body {
     color: white;
     width: 225px;
     height: 100vh;
+    position: relative;
 }
 .site-nav-title {
     padding: 20px 0;
     text-align: center;
     font-weight: lighter;
+    cursor: pointer;
 }
 .hr-divider {
     width: 40%;
@@ -58,7 +60,7 @@ html, body {
     transition: background-color 0.1s;
 }
 .site-nav-link:hover {
-    background-color: #2E2E2E;
+    background-color: #3b3b3b;
 }
 .site-nav-link-active {
     display: flex;
@@ -76,6 +78,9 @@ html, body {
         cursor: pointer;
         transition: background-color 0.1s;
 }
+.site-nav-link-active:hover {
+    background-color: #3b3b3b;
+}
 .nav-link-button-icon {
     width: 42px;
     height: 42px;
@@ -86,6 +91,23 @@ html, body {
     justify-content: center;
     font-size: 0.75em;
     color: rgba(255, 207, 134);
+}
+.add-user-button {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    right: 10px;
+    padding: 10px;
+    font-size: 1em;
+    background-color: #2E2E2E;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: lighter;
+}
+.add-user-button:hover {
+    background-color: #3b3b3b;
 }
 .add-item-button {
     background-color: #1F2124;
@@ -113,6 +135,19 @@ html, body {
     overflow-y: auto;
     height: 100vh;
 }
+::-webkit-scrollbar {
+    margin-top: 5px;
+    width: 5px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 .monthly-money-money {
     display: block;
     color: white !important;
@@ -130,11 +165,12 @@ html, body {
     padding: 20px;
     color: white;
     text-align: center;
-    padding-bottom: 50px;
+    padding-bottom: 75px;
 }
 .item-list > thead > tr > th {
     padding: 5px;
     font-size: 0.8em;
+    width: 100px;
 }
 .list-item {
     border-radius: 5px;
@@ -142,11 +178,13 @@ html, body {
     font-size: 0.8em;
     font-weight: lighter;
     transition: background-color 0.1s;
-    cursor: pointer;
+    cursor: default;
 }
 .list-item > td {
     padding: 5px;
     border-radius: 5px;
+    width: 100px;
+    margin: 0 auto;
 }
 .list-item:nth-child(even) {
     background-color: rgba(0, 0, 0, 0.05);
@@ -158,6 +196,8 @@ html, body {
     display: flex;
     justify-content: center;
     gap: 2px;
+    width: 100% !important;
+    background-color: #2E2E2E !important;
 }
 .item-action-button {
     background-color: #1F2124;
@@ -189,6 +229,8 @@ html, body {
 .item-list-header {
     background-color: #1F2124;
     border-radius: 5px;
+    position: sticky;
+    top: -2px;
 }
 .item-list-header > tr > th {
     border-radius: 5px;
@@ -269,6 +311,18 @@ html, body {
     margin: 0 auto;
     text-align: center;
 }
+.add-item-popup-select {
+    cursor: pointer;
+    width: 100%;
+    border: none;
+    padding: 10px;
+    background-color: #2E2E2E;
+    color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    position: relative;
+}
 .add-item-popup-bottom-body {
     display: flex;
     justify-content: center;
@@ -277,7 +331,7 @@ html, body {
 }
 .add-item-popup-footer {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
 }
 .add-item-popup-button-container {
@@ -313,7 +367,8 @@ html, body {
 }
 .add-item-popup-checkbox-container {
     display: flex;
-    align-items: center;
+    flex-flow: column;
+    align-items: flex-start;
     gap: 5px;
 }
 .add-item-popup-checkbox {
@@ -334,9 +389,11 @@ html, body {
     align-items: center;
     color: gray;
     position: fixed;
-    bottom: 0;
-    left: 225px;
-    right: 0;
-    background-color: #1F2124;
+    bottom: 10px;
+    left: 235px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.25);
     padding: 10px;
+    border-radius: 5px;
+    -webkit-backdrop-filter: blur(20px);
 }
