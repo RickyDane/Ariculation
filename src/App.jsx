@@ -30,7 +30,8 @@ function App() {
   const [currentItem, setCurrentItem] = useState({});
   const [currentView, setCurrentView] = useState("");
   const [listTypes, setListTypes] = useState([]);
-  const [currentListType, setCurrentListType] = useState("-");
+  const [currentListType, setCurrentListType] = useState(0);
+  const [isPending, setIsPending] = useState(false);
 
   const getUsers = async () => {
     await invoke("get_users").then(users => setUsers(users));
@@ -42,27 +43,40 @@ function App() {
   useEffect(() => {
     getUsers();
     getListTypes();
+    if (listTypes.length > 0) {
+      setCurrentListType(listTypes[0].id);
+    }
   }, []);
 
+  useEffect(() => {
+    document.querySelector(".new-list-tooltip-input").focus();
+  }, [showTooltipInput]);
+
   const showAllItems = async () => {
+    setIsPending(true);
+    console.log(currentListType);
     unselectAllNavLinks();
     setIsAllItemsActive(true);
     setCurrentView("all");
     document.querySelector(".allItems-button").classList.add("site-nav-link-active");
     appWindow.setTitle("Ariculation - All Items");
     setActiveUserId(0);
-    await invoke("get_all_items", { listType: currentListType }).then(items => setItems(items));
+    await invoke("get_all_items", { listType: parseInt(listTypes[0].id) }).then(items => setItems(items));
+    setIsPending(false);
   }
   const showJoint = async () => {
+    setIsPending(true);
     await unselectAllNavLinks();
     setIsJointActive(true);
     setCurrentView("joint");
     document.querySelector(".joint-button").classList.add("site-nav-link-active");
     appWindow.setTitle("Ariculation - Joint");
     setActiveUserId(0);
-    await invoke("get_items", { isSplit: true, isJoint: true, listType: currentListType }).then(items => setItems(items));
+    await invoke("get_items", { isSplit: true, isJoint: true, listType: parseInt(listTypes[0].id) }).then(items => setItems(items));
+    setIsPending(false);
   }
   const showUser = async (user) => {
+    setIsPending(true);
     await invoke("get_user", { userId: user.id }).then(user => {
       setActiveUserId(user.id);
       setUserMoney(parseFloat(user.start_money).toFixed(2));
@@ -72,7 +86,8 @@ function App() {
     setCurrentView("user");
     document.querySelector(".user-button-" + user.id).classList.add("site-nav-link-active");
     appWindow.setTitle("Ariculation - " + user.name);
-    await invoke("get_user_items", { userId: user.id, listType: currentListType }).then(items => setItems(items));
+    await invoke("get_user_items", { userId: user.id, listType: parseInt(listTypes[0].id) }).then(items => setItems(items));
+    setIsPending(false);
   }
   const deleteItem = async (id) => {
     await invoke("delete_item", { id: id });
@@ -94,52 +109,55 @@ function App() {
     document.querySelectorAll(".site-nav-link").forEach(link => link.classList.remove("site-nav-link-active"));
   }
   const clearJointItems = async () => {
+    setIsPending(true);
     await invoke("remove_joint_entries");
     showJoint();
+    setIsPending(false);
   }
   const handleSearchInput = async (e) => {
+    setIsPending(true);
     if (isAllItemsActive) {
-      await invoke("get_all_items", { listType: currentListType }).then(items => {
+      await invoke("get_all_items", { listType: parseInt(currentListType) }).then(items => {
         setItems(items.filter(item => item.name.toLowerCase().includes(e.target.value.toLowerCase()) == true || item.category.toLowerCase().includes(e.target.value.toLowerCase()) == true));
       });
-      return;
     }
     else if (isJointActive) {
-      await invoke("get_items", { isSplit: true, isJoint: true, listType: currentListType }).then(items => {
+      await invoke("get_items", { isSplit: true, isJoint: true, listType: parseInt(currentListType) }).then(items => {
         setItems(items.filter(item => item.name.toLowerCase().includes(e.target.value.toLowerCase()) == true || item.category.toLowerCase().includes(e.target.value.toLowerCase()) == true));
       });
-      return;
     }
     else if (activeUserId != 0) {
-      await invoke("get_user_items", { userId: activeUserId, listType: currentListType }).then(items => {
+      await invoke("get_user_items", { userId: activeUserId, listType: parseInt(currentListType) }).then(items => {
         setItems(items.filter(item => item.name.toLowerCase().includes(e.target.value.toLowerCase()) == true || item.category.toLowerCase().includes(e.target.value.toLowerCase()) == true));
       });
-      return;
     }
+    setIsPending(false);
   }
   const handleChangeListType = async (e) => {
+    setIsPending(true);
     setCurrentListType(parseInt(e.target.value));
     switch (currentView) {
-        case "all":
-          await invoke("get_all_items", { listType: parseInt(e.target.value) }).then(items => setItems(items));
-          break;
-        case "user":
-          await invoke("get_user_items", { userId: activeUserId, listType: parseInt(e.target.value) }).then(items => setItems(items));
-          break;
-        case "joint":
-          await invoke("get_items", { isSplit: true, isJoint: isJointActive, listType: parseInt(e.target.value) }).then(items => setItems(items));
-          break;
-        default:
-          console.log("Invalid view: ", currentView);
-          return;
-      }
+      case "all":
+        await invoke("get_all_items", { listType: parseInt(e.target.value) }).then(items => setItems(items));
+        break;
+      case "user":
+        await invoke("get_user_items", { userId: activeUserId, listType: parseInt(e.target.value) }).then(items => setItems(items));
+        break;
+      case "joint":
+        await invoke("get_items", { isSplit: true, isJoint: isJointActive, listType: parseInt(e.target.value) }).then(items => setItems(items));
+        break;
+      default:
+        console.log("Invalid view: ", currentView);
+        break;
+    };
+    setIsPending(false);
   }
 
   return (
     <>
       <div className="page">
         <div className="site-nav">
-          <h1 className="site-nav-title" onClick={() => { setItems([]); unselectAllNavLinks(); getUsers(); getListTypes(); }}>Ariculation</h1>
+          <h1 className="site-nav-title" onClick={() => { setItems([]); unselectAllNavLinks(); getUsers(); getListTypes(); setCurrentView(""); setCurrentListType(listTypes[0].id); appWindow.setTitle("Ariculation"); }}>Ariculation</h1>
           <div className="hr-divider"></div>
           <div className="site-nav-links">
             <button className="site-nav-link allItems-button" onClick={showAllItems}>
@@ -165,19 +183,22 @@ function App() {
           </div>
           <div className="site-nav-settings-bar">
             <button className="add-user-button" onClick={() => setShowAddUserPopup(true)}><i className="fa-solid fa-user-plus"></i></button>
-            <button className="site-nav-settings-button"><i className="fa-solid fa-gears"></i></button>
+            <button className="site-nav-settings-button" onClick={() => alert("Not yet implemented")}><i className="fa-solid fa-gears"></i></button>
           </div>
         </div>
         <div className="main-container">
+          <div className="pending-loader" style={{display: isPending == true ? "block" : "none"}}></div>
           <div className="toolbar">
             <input type="text" className="text-input" placeholder="Search ..." onChange={async (e) => { handleSearchInput(e) }}/>
             <div style={{display: "flex", gap: "5px"}}>
-              <button className="add-item-button" style={{display: isAllItemsActive ? "none" : "flex"}} onClick={() => setShowAddItemPopup("block")}>Add item <i className="fa-solid fa-circle-plus"></i></button>
-              <div className="list-type-container">
+              <button className="add-item-button" style={{display: currentView != null && currentView != "" && !isAllItemsActive ? "flex" : "none"}} onClick={() => setShowAddItemPopup("block")}>Add item <i className="fa-solid fa-circle-plus"></i></button>
+              <div className="list-type-container" style={{display: currentView != null && currentView != "" ? "flex" : "none"}}>
                 <select className="list-type-select item-select" value={currentListType} onChange={(e) => handleChangeListType(e)}>
-                  {listTypes.map((listType) => (<option key={listType.id} value={listType.id}>{listType.name}</option>))}
+                  {listTypes.filter(listType => listType.user_id == activeUserId || listType.is_joint == true).map((listType) => (
+                    <option key={listType.id} value={listType.id}>{listType.name}</option>
+                  ))}
                 </select>
-                <button className="add-list-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-circle-plus"></i></button>
+                <button className="add-list-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-plus"></i></button>
               </div>
             </div>
           </div>
@@ -202,7 +223,7 @@ function App() {
                   <td>{item.is_split == true ? parseFloat(item.price / users.length).toFixed(2).toString().replace(".", ",") : "-"}</td>
                   <td>
                     <div className="item-action-buttons">
-                      <button className="item-action-button" onClick={() => { setShowEditItemPopup("block"); setEditItem(item)}}>
+                      <button className="item-action-button" onClick={() => { setShowEditItemPopup("block"); setEditItem(item) }}>
                         <i className="fa-solid fa-pencil"></i>
                       </button>
                       <button className="item-action-button item-action-button-delete" onClick={() => openQuestionPopup(item, "Should this item be deleted?", () => deleteItem(item.id))}>
@@ -284,7 +305,13 @@ function App() {
         confirmFunction={confirmFunction}
         msg={questionPopupMsg}
         item={currentItem} />
-      <TooltipInput setShow={setShowTooltipInput} show={showTooltipInput} />
+      <TooltipInput
+        setShow={setShowTooltipInput}
+        show={showTooltipInput}
+        setListTypes={setListTypes}
+        setIsPending={setIsPending}
+        isJoint={isJointActive}
+        activeUserId={activeUserId}/>
     </>
   );
 }

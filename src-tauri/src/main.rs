@@ -18,7 +18,8 @@ fn main() {
             update_user,
             get_user,
             remove_joint_entries,
-            get_list_types
+            get_list_types,
+            add_list_type
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -149,8 +150,9 @@ async fn add_user(name: String, start_money: String) {
 #[tauri::command]
 async fn get_user_items(user_id: i32, list_type: i32) -> Vec<Item> {
     let conn = get_db_connection().await;
-    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ? AND user_id = ? AND (is_visible_on_user = true OR is_split = true)")
+    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ? AND ((user_id = ? AND is_visible_on_user = true) OR (user_id = ? OR is_split = true))")
         .bind(list_type)
+        .bind(user_id)
         .bind(user_id)
         .fetch_all(&conn)
         .await
@@ -198,6 +200,8 @@ async fn remove_joint_entries() {
 struct List {
     id: i32,
     name: String,
+    user_id: i32,
+    is_joint: bool,
     last_modified: String
 }
 
@@ -209,4 +213,17 @@ async fn get_list_types() -> Vec<List> {
         .await
         .unwrap();
     return list_types;
+}
+
+#[tauri::command]
+async fn add_list_type(name: String, user_id: i32, is_joint: bool) {
+    let conn = get_db_connection().await;
+    sqlx::query("INSERT INTO tbl_list (name, user_id, is_joint, last_modified) VALUES (?, ?, ?, ?)")
+        .bind(name)
+        .bind(user_id)
+        .bind(is_joint)
+        .bind(Local::now().to_string())
+        .execute(&conn)
+        .await
+        .unwrap();
 }

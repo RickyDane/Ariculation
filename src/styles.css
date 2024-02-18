@@ -103,6 +103,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     overflow: hidden;
+    height: 40px;
 }
 .add-user-button {
     width: 100%;
@@ -142,7 +143,7 @@ html, body {
     font-size: 1em;
     font-weight: 300;
     cursor: pointer;
-    padding: 5px 10px;
+    padding: 7.5px 10px;
 }
 .add-item-button:hover {
     background-color: #3b3b3b;
@@ -488,7 +489,7 @@ html, body {
     padding: 5px 10px;
     border-radius: 5px;
     -webkit-backdrop-filter: blur(20px);
-    min-height: 35px;
+    height: 40px;
 }
 
 .tooltip-input {
@@ -505,4 +506,23 @@ html, body {
     margin: auto;
     background-color: #2E2E2E;
     z-index: 100;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.pending-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 5px solid #1F2124;
+    border-top: 5px solid #555;
+    animation: spin 2s linear infinite;
 }
