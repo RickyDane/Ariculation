@@ -2,7 +2,10 @@
 
 use chrono::Local;
 use serde::Serialize;
-use sqlx::MySqlPool;
+use sqlx::{query, MySqlPool};
+
+const DB_NAME: &str = "ariculation_prd";
+const DATABASE_URL: &str = "mysql://root:arickinda@192.168.2.178";
 
 fn main() {
     tauri::Builder::default()
@@ -19,7 +22,8 @@ fn main() {
             get_user,
             remove_joint_entries,
             get_list_types,
-            add_list_type
+            add_list_type,
+            check_or_create_db
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -38,9 +42,55 @@ struct Item {
     is_visible_on_user: bool,
     user_id: i32
 }
+#[derive(Debug)]
+#[derive(Serialize)]
+#[derive(sqlx::FromRow)]
+struct User {
+    id: i32,
+    name: String,
+    start_money: f32,
+    ref_id: String,
+    last_modified: String,
+}
+#[derive(Debug)]
+#[derive(Serialize)]
+#[derive(sqlx::FromRow)]
+struct List {
+    id: i32,
+    name: String,
+    user_id: i32,
+    is_joint: bool,
+    last_modified: String
+}
+
+#[tauri::command]
+async fn check_or_create_db() {
+    let conn = MySqlPool::connect(DATABASE_URL).await.unwrap();
+    // create db if not exists
+    sqlx::query("CREATE DATABASE IF NOT EXISTS ariculation_prd")
+        .execute(&conn)
+        .await
+        .unwrap_or_default();
+    let conn = MySqlPool::connect(format!("{}/{}", DATABASE_URL, DB_NAME).as_str())
+        .await
+        .unwrap();
+    // create tabes if not exists
+    sqlx::query("CREATE TABLE tbl_items (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), category VARCHAR(255), description TEXT, price FLOAT, is_split BOOLEAN, is_joint BOOLEAN, user_id INT, last_modified VARCHAR(255), is_visible_on_user BOOLEAN, list_type INT, PRIMARY KEY (id))")
+        .execute(&conn)
+        .await
+        .unwrap_or_default();
+    sqlx::query("CREATE TABLE tbl_user (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), start_money FLOAT, ref_id varchar(255), last_modified VARCHAR(255), PRIMARY KEY (id))")
+        .execute(&conn)
+        .await
+        .unwrap_or_default();
+    sqlx::query("CREATE TABLE tbl_list (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), user_id INT, is_joint BOOLEAN, last_modified VARCHAR(255), PRIMARY KEY (id))")
+        .execute(&conn)
+        .await
+        .unwrap_or_default();
+}
 
 async fn get_db_connection() -> MySqlPool {
-    MySqlPool::connect("mysql://root:arickinda@192.168.2.178/ariculation_dev").await.unwrap()
+    MySqlPool::connect(format!("{}/{}", DATABASE_URL, DB_NAME).as_str()).await.unwrap()
 }
 
 #[tauri::command]
@@ -76,10 +126,9 @@ async fn get_items(is_split: bool, is_joint: bool, list_type: i32) -> Vec<Item> 
 }
 
 #[tauri::command]
-async fn get_all_items(list_type: i32) -> Vec<Item> {
+async fn get_all_items() -> Vec<Item> {
     let conn = get_db_connection().await;
-    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ?")
-        .bind(list_type)
+    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items")
         .fetch_all(&conn)
         .await
         .unwrap();
@@ -115,16 +164,6 @@ async fn delete_item(id: i32) {
         .unwrap();
 }
 
-#[derive(Debug)]
-#[derive(Serialize)]
-#[derive(sqlx::FromRow)]
-struct User {
-    id: i32,
-    name: String,
-    start_money: f32,
-    last_modified: String,
-}
-
 #[tauri::command]
 async fn get_users() -> Vec<User> {
     let conn = get_db_connection().await;
@@ -136,12 +175,13 @@ async fn get_users() -> Vec<User> {
 }
 
 #[tauri::command]
-async fn add_user(name: String, start_money: String) {
+async fn add_user(name: String, start_money: String, ref_id: String) {
     let conn = get_db_connection().await;
-    sqlx::query("INSERT INTO tbl_user (name, start_money, last_modified) VALUES (?, ?, ?)")
+    sqlx::query("INSERT INTO tbl_user (name, start_money, last_modified, ref_id) VALUES (?, ?, ?, ?)")
         .bind(name)
         .bind(start_money.parse::<f32>().unwrap())
         .bind(Local::now().to_string())
+        .bind(ref_id)
         .execute(&conn)
         .await
         .unwrap();
@@ -192,17 +232,6 @@ async fn remove_joint_entries() {
         .execute(&conn)
         .await
         .unwrap();
-}
-
-#[derive(Debug)]
-#[derive(Serialize)]
-#[derive(sqlx::FromRow)]
-struct List {
-    id: i32,
-    name: String,
-    user_id: i32,
-    is_joint: bool,
-    last_modified: String
 }
 
 #[tauri::command]

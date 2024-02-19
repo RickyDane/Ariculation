@@ -525,4 +525,5 @@ html, body {
     border: 5px solid #1F2124;
     border-top: 5px solid #555;
     animation: spin 2s linear infinite;
+    z-index: 100;
 }

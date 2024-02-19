@@ -38,10 +38,10 @@ function AddItemPopup(props) {
 
     switch (props.currentView) {
       case "all":
-        await invoke("get_all_items", { listType: props.currentListType }).then(items => props.setItems(items));
+        await invoke("get_all_items", { listType: parseInt(props.currentListType) }).then(items => props.setItems(items));
         break;
       case "user":
-        await invoke("get_user_items", { userId: props.activeUserId, listType: props.currentListType }).then(items => props.setItems(items));
+        await invoke("get_user_items", { userId: props.activeUserId, listType: parseInt(props.currentListType) }).then(items => props.setItems(items));
         break;
       case "joint":
         await invoke("get_items", { isSplit: true, isJoint: props.isJoint, listType: parseInt(props.currentListType) }).then(items => props.setItems(items));

@@ -13,15 +13,22 @@ function AddUserPopup(props) {
     setUserMoney(e.target.value);
   }
   const handleAddUser = async () => {
+    props.setIsPending(true);
+    props.setShow("none");
     if (!userName.length > 0) { return; }
     if (!userMoney.length > 0) { return; }
     let newUser = {
       name: userName,
-      money: userMoney
+      money: userMoney,
+      ref_id: crypto.randomUUID()
     }
-    await invoke("add_user", { name: newUser.name, startMoney: newUser.money.toString() });
-    await invoke("get_users").then(users => props.setUsers(users));
-    props.setShow("none");
+    await invoke("add_user", { name: newUser.name, startMoney: newUser.money.toString(), refId: newUser.ref_id });
+    await invoke("get_users").then(async users => {
+      props.setUsers(users)
+      console.log(users.find(user => user.ref_id == newUser.ref_id).id);
+      await invoke("add_list_type", { name: "Default", userId: users.find(user => user.ref_id == newUser.ref_id).id, isJoint: false });
+    });
+    props.setIsPending(false);
   }
 
   useEffect(() => {
