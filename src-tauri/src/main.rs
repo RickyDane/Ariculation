@@ -2,7 +2,7 @@
 
 use chrono::Local;
 use serde::Serialize;
-use sqlx::{query, MySqlPool};
+use sqlx::MySqlPool;
 
 const DB_NAME: &str = "ariculation_prd";
 const DATABASE_URL: &str = "mysql://root:arickinda@192.168.2.178";
@@ -23,7 +23,8 @@ fn main() {
             remove_joint_entries,
             get_list_types,
             add_list_type,
-            check_or_create_db
+            check_or_create_db,
+            delete_list_type
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -252,6 +253,16 @@ async fn add_list_type(name: String, user_id: i32, is_joint: bool) {
         .bind(user_id)
         .bind(is_joint)
         .bind(Local::now().to_string())
+        .execute(&conn)
+        .await
+        .unwrap();
+}
+
+#[tauri::command]
+async fn delete_list_type(id: i32) {
+    let conn = get_db_connection().await;
+    sqlx::query("DELETE FROM tbl_list WHERE id = ?")
+        .bind(id)
         .execute(&conn)
         .await
         .unwrap();

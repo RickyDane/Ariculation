@@ -7,8 +7,9 @@ import "./font-awesome/css/all.min.css";
 import AddItemPopup from "./AddItemPopup";
 import EditItemPopup from "./EditItemPopup";
 import AddUserPopup from "./AddUserPopup";
-import QuestionPopup from "./QuestionPopup.jsx";
+import QuestionPopup from "./QuestionPopup";
 import TooltipInput from "./TooltipInput";
+import SettingsPopup from "./SettingsPopup";
 
 let IsAppFirstRun = true;
 
@@ -34,6 +35,7 @@ function App() {
   const [listTypes, setListTypes] = useState([]);
   const [currentListType, setCurrentListType] = useState(0);
   const [isPending, setIsPending] = useState(false);
+  const [showSettingsPopup, setShowSettingsPopup] = useState("none");
 
   const getUsers = async () => {
     await invoke("get_users").then(users => setUsers(users));
@@ -41,12 +43,10 @@ function App() {
 
   const checkOrCreateDB = async () => {
     setIsPending(true);
-    console.log("Checking or creating DB . . .");
     await invoke("check_or_create_db").then(async () => {
       await getUsers();
       IsAppFirstRun = false;
     });
-    console.log("DB checked or created!");
     setIsPending(false);
   }
 
@@ -58,7 +58,6 @@ function App() {
 
   useEffect(() => {
     setIsPending(true);
-    console.log(activeUserId, currentListType, listTypes);
     switch (currentView) {
       case "all":
         invoke("get_all_items", { listType: parseInt(currentListType) }).then(items => setItems(items));
@@ -74,7 +73,7 @@ function App() {
         break;
     };
     setIsPending(false);
-  }, [currentListType, currentView]);
+  }, [listTypes, currentListType, currentView]);
 
   useEffect(() => {
     document.querySelector(".new-list-tooltip-input").focus();
@@ -96,7 +95,6 @@ function App() {
     await invoke("get_list_types").then(types => {
       if (types.length > 0) {
         if (userId != null && userId != 0) {
-          console.log(activeUserId, types);
           setCurrentListType(types.find(list => list.user_id == parseInt(userId)).id);
         }
         else {
@@ -191,6 +189,9 @@ function App() {
     setCurrentListType(parseInt(e.target.value));
     setIsPending(false);
   }
+  const openSettings = async () => {
+    setShowSettingsPopup("flex");
+  }
 
   return (
     <>
@@ -222,7 +223,7 @@ function App() {
           </div>
           <div className="site-nav-settings-bar">
             <button className="add-user-button" onClick={() => setShowAddUserPopup(true)}><i className="fa-solid fa-user-plus"></i></button>
-            <button className="site-nav-settings-button" onClick={() => alert("Not yet implemented")}><i className="fa-solid fa-gears"></i></button>
+            <button className="site-nav-settings-button" onClick={openSettings}><i className="fa-solid fa-gears"></i></button>
           </div>
         </div>
         <div className="main-container">
@@ -234,7 +235,7 @@ function App() {
               <div className="list-type-container" style={{display: currentView != null && currentView != "" && !isAllItemsActive ? "flex" : "none"}}>
                 <select className="list-type-select item-select" value={currentListType} onChange={(e) => handleChangeListType(e)}>
                   {listTypes.filter(listType => listType.user_id == activeUserId || isJointActive || isAllItemsActive == true).map((listType) => (
-                    <option key={listType.id} value={listType.id}>{listType.name}{isJointActive ? " - " + users.find(user => user.id == listType.user_id).name : ""}</option>
+                    <option key={listType.id} value={listType.id}>{listType.name}{isJointActive ? " - " + users.find(user => user.id == listType.user_id)?.name : ""}</option>
                   ))}
                 </select>
                 <button className="add-list-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-plus"></i></button>
@@ -351,7 +352,18 @@ function App() {
         setListTypes={setListTypes}
         setIsPending={setIsPending}
         isJoint={isJointActive}
-        activeUserId={activeUserId}/>
+        activeUserId={activeUserId} />
+      <SettingsPopup
+        users={users}
+        setShow={setShowSettingsPopup}
+        show={showSettingsPopup}
+        setListTypes={setListTypes}
+        setIsPending={setIsPending}
+        isJoint={isJointActive}
+        activeUserId={activeUserId}
+        listTypes={listTypes}
+        setCurrentListType={setCurrentListType}
+        />
     </>
   );
 }

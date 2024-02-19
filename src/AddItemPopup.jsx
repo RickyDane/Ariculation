@@ -4,11 +4,11 @@ import { invoke } from "@tauri-apps/api/tauri";
 function AddItemPopup(props) {
   const [itemName, setItemName] = useState("");
   const [itemCategory, setItemCategory] = useState("");
-  const [itemPerson, setItemPerson] = useState("0");
+  const [itemPerson, setItemPerson] = useState(props.activeUserId.toString());
   const [itemDescription, setItemDescription] = useState("");
   const [itemPrice, setItemPrice] = useState(0);
   const [itemSplit, setItemSplit] = useState(false);
-  const [itemVisOnUser, setItemVisOnUser] = useState(false);
+  const [itemVisOnUser, setItemVisOnUser] = useState(props.activeUserId > 0 ? true : false);
 
   const handleNameChange = (e) => { setItemName(e.target.value) }
   const handleCategoryChange = (e) => { setItemCategory(e.target.value) }
@@ -19,9 +19,10 @@ function AddItemPopup(props) {
   const handleVisOnUserChange = (e) => { setItemVisOnUser(e.target.checked) }
 
   const handleAddItem = async () => {
+    console.log(props.activeUserId, itemName, itemCategory, itemPerson, itemDescription, itemPrice, itemSplit, itemVisOnUser);
     if (!itemName.length > 0) { return; }
     if (!itemCategory.length > 0) { return; }
-    if (!itemPerson.length > 0) { return; }
+    if (!itemPerson > 0) { return; }
     if (itemPrice == null) { return; }
     await invoke("add_item", {
       name: itemName,
@@ -57,7 +58,7 @@ function AddItemPopup(props) {
     setItemSplit(false);
     setItemName("");
     setItemCategory("");
-    setItemPerson("0");
+    setItemPerson(parseInt(props.activeUserId));
     setItemDescription("");
     setItemPrice(0);
   }, [props.show]);
@@ -89,10 +90,12 @@ function AddItemPopup(props) {
                 <input id="split-checkbox" type="checkbox" className="add-item-popup-checkbox" checked={itemSplit} onChange={handleSplitChange} />
                 <label htmlFor="split-checkbox" className="add-item-popup-checkbox-label">Split</label>
               </div>
-              <div style={{display: "flex", alignItems: "center"}}>
-                <input id="user-vis-checkbox" type="checkbox" className="add-item-popup-checkbox" checked={itemVisOnUser} onChange={handleVisOnUserChange} />
-                <label htmlFor="user-vis-checkbox" className="add-item-popup-checkbox-label">Visible on user</label>
-              </div>
+              {props.activeUserId > 0 ? "" : (
+                <div style={{display: "flex", alignItems: "center"}}>
+                  <input id="user-vis-checkbox" type="checkbox" className="add-item-popup-checkbox" checked={itemVisOnUser} onChange={handleVisOnUserChange} />
+                  <label htmlFor="user-vis-checkbox" className="add-item-popup-checkbox-label">Visible on user</label>
+                </div>
+              )}
             </div>
             <div className="add-item-popup-button-container">
               <button className="add-item-popup-button add-item-popup-button-cancel" onClick={() => props.setShow("none")}>Cancel</button>
