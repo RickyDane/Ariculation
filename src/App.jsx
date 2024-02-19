@@ -235,7 +235,7 @@ function App() {
               <div className="list-type-container" style={{display: currentView != null && currentView != "" && !isAllItemsActive ? "flex" : "none"}}>
                 <select className="list-type-select item-select" value={currentListType} onChange={(e) => handleChangeListType(e)}>
                   {listTypes.filter(listType => listType.user_id == activeUserId || isJointActive || isAllItemsActive == true).map((listType) => (
-                    <option key={listType.id} value={listType.id}>{listType.name}{isJointActive ? " - " + users.find(user => user.id == listType.user_id)?.name : ""}</option>
+                    <option key={listType.id} value={listType.id}>{listType.name}{isJointActive && users.find(user => user.id == listType.user_id)?.name != null ? " - " + users.find(user => user.id == listType.user_id)?.name : ""}</option>
                   ))}
                 </select>
                 <button className="add-list-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-plus"></i></button>
@@ -288,12 +288,12 @@ function App() {
                 }
               }}/>
             </div>
-            {isJointActive ? (
+            {/* {isJointActive ? (
             <button className="remove-joint-entries" onClick={() => openQuestionPopup({}, "Are you sure you want to remove all joint entries?", () => clearJointItems())}>
               <i className="fa-solid fa-xmark"></i>
               Remove entries
             </button>
-            ) : ""}
+            ) : ""} */}
             <div style={{display: "flex", gap: "5px"}}>
               {items.length > 0 ? "Total:" : "No items"}
               <p style={{color: "white"}}>
