@@ -8,7 +8,7 @@ import AddItemPopup from "./AddItemPopup";
 import EditItemPopup from "./EditItemPopup";
 import AddUserPopup from "./AddUserPopup";
 import QuestionPopup from "./QuestionPopup";
-import TooltipInput from "./TooltipInput";
+import NewListInput from "./NewListInput";
 import SettingsPopup from "./SettingsPopup";
 
 let IsAppFirstRun = true;
@@ -26,7 +26,6 @@ function App() {
   const [users, setUsers] = useState([]);
   const [activeUserId, setActiveUserId] = useState(0);
   const [currentMoney, setCurrentMoney] = useState("0");
-  const [activeUserName, setActiveUserName] = useState("");
   const [showQuestionPopup, setShowQuestionPopup] = useState("none");
   const [confirmFunction, setConfirmFunction] = useState(() => { });
   const [questionPopupMsg, setQuestionPopupMsg] = useState("");
@@ -84,14 +83,17 @@ function App() {
   }, [listTypes, currentListType, currentView]);
 
   useEffect(() => {
-    document.querySelector(".new-list-tooltip-input").focus();
+    document.querySelector(".newlist-name-input").focus();
   }, [showTooltipInput]);
 
   const updateListMoney = async (e) => {
-    setIsPending(true);
-    setCurrentMoney(e.target.value);
-    await invoke("update_list_money", { listMoney: e.target.value.toString().replace(",", "."), userId: activeUserId, id: parseInt(currentListType) });
-    setIsPending(false);
+    if (isAllItemsActive == true) return;
+    if (e.key === "Enter") {
+      setIsPending(true);
+      await invoke("update_list_money", { listMoney: e.target.value.toString().replace(",", "."), userId: activeUserId, id: parseInt(currentListType) });
+      e.target.blur();
+      setIsPending(false);
+    }
   }
 
   const runClear = async () => {
@@ -115,13 +117,11 @@ function App() {
     });
   }
   const updateCurrentView = async (windowTitle, currentView, user) => {
-    setIsPending(true);
     await unselectAllNavLinks();
     await refreshListTypes(user.id);
     appWindow.setTitle(windowTitle);
     setCurrentView(currentView);
     setActiveUserId(user.id);
-    setIsPending(false);
   }
   const showAllItems = async () => {
     setIsPending(true);
@@ -178,6 +178,10 @@ function App() {
     setIsPending(false);
   }
   const handleChangeListType = async (e) => {
+    if (listTypes.find(list => list.id == parseInt(e.target.value)).list_password.length > 0) {
+      alert("This list is password protected");
+      return;
+    }
     setIsPending(true);
     setCurrentListType(parseInt(e.target.value));
     setIsPending(false);
@@ -222,7 +226,7 @@ function App() {
         <div className="main-container">
           <div className="pending-loader" style={{display: isPending == true ? "block" : "none"}}></div>
           <div className="toolbar">
-            <input type="text" className="text-input" placeholder="Search ..." onChange={async (e) => { handleSearchInput(e) }}/>
+            <input type="search" results={"5"} name="s" className="text-input search-input" placeholder="Search ..." onChange={async (e) => { handleSearchInput(e) }}/>
             <div style={{display: "flex", gap: "5px"}}>
               <button className="add-item-button" style={{display: currentView != null && currentView != "" && !isAllItemsActive ? "flex" : "none"}} onClick={() => setShowAddItemPopup("block")}>Add item <i className="fa-solid fa-circle-plus"></i></button>
               <div className="list-type-container" style={{display: currentView != null && currentView != "" && !isAllItemsActive ? "flex" : "none"}}>
@@ -271,9 +275,7 @@ function App() {
           <div className="page-sum-footer">
             <div style={{display: "flex"}}>
               {"Start: "}
-              <input type="text" className="monthly-money-money" value={activeUserId != 0 ? currentMoney.toString().replace(".", ",") : monthlyMoney.toString().replace(".", ",")} onChange={
-                (e) => updateListMoney(e)
-              }/>
+              <input type="text" className="monthly-money-money" value={currentMoney.toString().replace(".", ",")} onChange={(e) => setCurrentMoney(e.target.value)} onKeyUp={updateListMoney}/>
             </div>
             {/* {isJointActive ? (
             <button className="remove-joint-entries" onClick={() => openQuestionPopup({}, "Are you sure you want to remove all joint entries?", () => clearJointItems())}>
@@ -285,7 +287,7 @@ function App() {
               {items.length > 0 ? "Total:" : "No items"}
               <p style={{color: "white"}}>
                 {items.length > 0 ?
-                  (parseFloat(activeUserId != 0 ? currentMoney.toString().replace(",", ".") : monthlyMoney)
+                  parseFloat(parseFloat(currentMoney.toString().replace(",", "."))
                   +
                   items.filter(item => item.is_split == true).reduce((pre, item) => parseFloat(pre) + parseFloat(item.price) / users.length, 0)
                   +
@@ -333,7 +335,7 @@ function App() {
         confirmFunction={confirmFunction}
         msg={questionPopupMsg}
         item={currentItem} />
-      <TooltipInput
+      <NewListInput
         setShow={setShowTooltipInput}
         show={showTooltipInput}
         setListTypes={setListTypes}
