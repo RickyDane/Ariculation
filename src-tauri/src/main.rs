@@ -26,7 +26,8 @@ fn main() {
             check_or_create_db,
             delete_list_type,
             update_list_money,
-            get_list_type
+            get_list_type,
+            get_userfiltered_items
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -295,4 +296,41 @@ async fn delete_list_type(id: i32) {
         .execute(&conn)
         .await
         .unwrap();
+}
+
+#[tauri::command]
+async fn get_userfiltered_items(user_id: i32, list_type: i32, is_all_items: bool) -> Vec<Item> {
+    let conn = get_db_connection().await;
+    if is_all_items && user_id != 0 {
+        let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_all(&conn)
+            .await
+            .unwrap();
+        return items;
+    }
+    else if is_all_items && user_id == 0 {
+        let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items")
+            .fetch_all(&conn)
+            .await
+            .unwrap();
+        return items;
+    }
+    else if user_id == 0 {
+        let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ?")
+            .bind(list_type)
+            .fetch_all(&conn)
+            .await
+            .unwrap();
+        return items;
+    }
+    else {
+        let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ? AND user_id = ?")
+            .bind(list_type)
+            .bind(user_id)
+            .fetch_all(&conn)
+            .await
+            .unwrap();
+        return items;
+    }
 }
