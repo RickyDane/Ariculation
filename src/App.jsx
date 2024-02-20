@@ -35,11 +35,11 @@ function App() {
   const [currentListType, setCurrentListType] = useState(0);
   const [isPending, setIsPending] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState("none");
+  const [currentUserFilter, setCurrentUserFilter] = useState(0);
 
   const getUsers = async () => {
     await invoke("get_users").then(users => setUsers(users));
   }
-
   const checkOrCreateDB = async () => {
     setIsPending(true);
     await invoke("check_or_create_db").then(async () => {
@@ -48,13 +48,11 @@ function App() {
     });
     setIsPending(false);
   }
-
   useEffect(() => {
     if (IsAppFirstRun == true) {
       checkOrCreateDB();
     }
   }, []);
-
   const setCurrentListMoney = async () => {
     setIsPending(true);
     if (currentListType != 0) {
@@ -189,6 +187,11 @@ function App() {
   const openSettings = async () => {
     setShowSettingsPopup("flex");
   }
+  useEffect(() => {
+    setIsPending(true);
+    invoke("get_userfiltered_items", { listType: parseInt(currentListType), userId: parseInt(currentUserFilter), isAllItems: isAllItemsActive }).then(items => setItems(items));
+    setIsPending(false);
+  }, [currentUserFilter]);
 
   return (
     <>
@@ -283,21 +286,41 @@ function App() {
               Remove entries
             </button>
             ) : ""} */}
-            <div style={{display: "flex", gap: "5px"}}>
-              {items.length > 0 ? "Total:" : "No items"}
-              <p style={{color: "white"}}>
+            <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
+              <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
+                {"Filter: "}
+                <select className="item-select" value={currentUserFilter} onChange={(e) => setCurrentUserFilter(e.target.value)} style={{minWidth: "0", width: "100px"}}>
+                  <option value="0">All</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </select>
                 {items.length > 0 ?
-                  parseFloat(parseFloat(currentMoney.toString().replace(",", "."))
-                  +
-                  items.filter(item => item.is_split == true).reduce((pre, item) => parseFloat(pre) + parseFloat(item.price) / users.length, 0)
-                  +
-                  items.filter(item => item.is_split == false).reduce((acc, item) => parseFloat(acc) + parseFloat(item.price), 0)).toFixed(2).toString().replace(".", ",")
-                  +
-                  " €"
-                  :
-                  ""
-                }
-              </p>
+                    (items.filter(item => item.is_split == true).reduce((pre, item) => parseFloat(pre) + parseFloat(item.price) / users.length, 0)
+                    +
+                    items.filter(item => item.is_split == false).reduce((acc, item) => parseFloat(acc) + parseFloat(item.price), 0)).toFixed(2).toString().replace(".", ",")
+                    +
+                    " €"
+                    :
+                    ""
+                  }
+              </div>
+              <div style={{display: "flex", gap: "5px"}}>
+                {items.length > 0 ? "Total:" : "No items"}
+                <p style={{color: "white"}}>
+                  {items.length > 0 ?
+                    parseFloat(parseFloat(currentMoney.toString().replace(",", "."))
+                    +
+                    items.filter(item => item.is_split == true).reduce((pre, item) => parseFloat(pre) + parseFloat(item.price) / users.length, 0)
+                    +
+                    items.filter(item => item.is_split == false).reduce((acc, item) => parseFloat(acc) + parseFloat(item.price), 0)).toFixed(2).toString().replace(".", ",")
+                    +
+                    " €"
+                    :
+                    ""
+                  }
+                </p>
+              </div>
             </div>
           </div>
         </div>
