@@ -37,9 +37,6 @@ function App() {
   const [currentUserFilter, setCurrentUserFilter] = useState(0);
   const [appConfig, setAppConfig] = useState({});
 
-  useEffect(() => {
-    console.log(appConfig);
-  }, [appConfig]);
   const getUsers = async () => {
     await invoke("get_users").then(users => setUsers(users));
   }
@@ -239,7 +236,7 @@ function App() {
                     <option key={listType.id} value={listType.id}>{listType.name}{isJointActive && users.find(user => user.id == listType.user_id)?.name != null ? " - " + users.find(user => user.id == listType.user_id)?.name : ""}</option>
                   ))}
                 </select>
-                <button className="add-list-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-plus"></i></button>
+                <button className="add-list-button concat-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-plus"></i></button>
               </div>
             </div>
           </div>

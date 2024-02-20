@@ -13,10 +13,10 @@ function AddUserPopup(props) {
     setUserMoney(e.target.value);
   }
   const handleAddUser = async () => {
+    if (!userName.length > 0) { alert("Type in a username"); return; }
+    if (!userMoney.length > 0) { alert("Type in an amount of money to start"); return; }
     props.setIsPending(true);
     props.setShow("none");
-    if (!userName.length > 0) { return; }
-    if (!userMoney.length > 0) { return; }
     let newUser = {
       name: userName,
       money: userMoney,

@@ -35,7 +35,7 @@ function NewListInput(props) {
     <div className="newlist-input-container" style={{display: props.show}} >
       <input className="text-input newlist-name-input" value={listName} onChange={(e) => setListName(e.target.value)} placeholder="New list .." onKeyUp={handleEnter} />
       <br/>
-      <input style={{marginTop: "5px"}} className="text-input newlist-password-input" value={listPassword} onChange={(e) => setListPassword(e.target.value)} onKeyUp={handleEnter} type="text" placeholder="Password / std: -" />
+      <input type="password" style={{marginTop: "5px"}} className="text-input newlist-password-input" value={listPassword} onChange={(e) => setListPassword(e.target.value)} onKeyUp={handleEnter} placeholder="Password / std: -" />
     </div>
   );
 }

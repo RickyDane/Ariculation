@@ -220,7 +220,6 @@ body {
 }
 .list-type-container {
     display: flex;
-    align-items: center;
     background-color: #2E2E2E;
     border-radius: 5px;
     overflow: hidden;
@@ -231,8 +230,6 @@ body {
     outline: none;
 }
 .add-list-button {
-    width: 32px;
-    height: 100%;
     background-color: #333;
     border: none;
     color: white;
@@ -470,6 +467,12 @@ body {
 }
 .add-item-popup-button-cancel:hover {
     background-color: #2F2327;
+}
+.concat-button {
+    width: 32px;
+}
+.concat-button:hover {
+    background-color: #3b3b3b !important;
 }
 .add-item-popup-checkbox-container {
     display: flex;
