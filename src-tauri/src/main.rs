@@ -1,11 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use chrono::Local;
-use serde::Serialize;
 use sqlx::MySqlPool;
+use serde::Serialize;
 
 const DB_NAME: &str = "ariculation_prd";
-const DATABASE_URL: &str = "mysql://root:arickinda@192.168.2.178";
+const DATABASE_URL: &str = "mysql://root:root@localhost";
 
 fn main() {
     tauri::Builder::default()

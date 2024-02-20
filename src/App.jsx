@@ -87,7 +87,7 @@ function App() {
   }, [showTooltipInput]);
 
   const updateListMoney = async (e) => {
-    if (isAllItemsActive == true) return;
+    if (isAllItemsActive == true || (isJointActive && !listTypes.find(list => list.id == currentListType).is_joint)) return;
     if (e.key === "Enter") {
       setIsPending(true);
       await invoke("update_list_money", { listMoney: e.target.value.toString().replace(",", "."), userId: activeUserId, id: parseInt(currentListType) });

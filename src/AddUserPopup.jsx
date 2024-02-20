@@ -26,7 +26,7 @@ function AddUserPopup(props) {
     await invoke("get_users").then(async users => {
       props.setUsers(users)
       console.log(users.find(user => user.ref_id == newUser.ref_id).id);
-      await invoke("add_list_type", { name: "Default", userId: users.find(user => user.ref_id == newUser.ref_id).id, isJoint: false });
+      await invoke("add_list_type", {listPassword: "", listMoney: parseFloat(userMoney).toFixed(2).toString(), name: "Default", userId: users.find(user => user.ref_id == newUser.ref_id).id, isJoint: false });
     });
     props.setIsPending(false);
   }

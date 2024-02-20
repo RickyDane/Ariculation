@@ -10,12 +10,12 @@ function NewListInput(props) {
     if (e.key === "Enter" && listName.length >= 3) {
       props.setShow("none");
       await invoke("get_users").then(async users => {
-        console.log(users, props.activeUserId, users.find(user => user.id == parseInt(props.activeUserId)).start_money.toString());
+        let money = props.activeUserId > 0 ? parseFloat(users.find(user => user.id == parseInt(props.activeUserId)).start_money).toFixed(2).toString() : "0.00";
         await invoke("add_list_type", {
           name: listName,
           userId: props.activeUserId,
           isJoint: props.isJoint,
-          listMoney: parseFloat(users.find(user => user.id == parseInt(props.activeUserId)).start_money).toFixed(2).toString(),
+          listMoney: money,
           listPassword: listPassword
         }).then(async () => {
           await invoke("get_list_types").then(types => props.setListTypes(types))
