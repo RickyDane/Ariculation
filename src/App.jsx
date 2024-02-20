@@ -8,7 +8,7 @@ import AddItemPopup from "./AddItemPopup";
 import EditItemPopup from "./EditItemPopup";
 import AddUserPopup from "./AddUserPopup";
 import QuestionPopup from "./QuestionPopup";
-import TooltipInput from "./TooltipInput";
+import NewListInput from "./NewListInput";
 import SettingsPopup from "./SettingsPopup";
 
 let IsAppFirstRun = true;
@@ -25,8 +25,7 @@ function App() {
   const [isJointActive, setIsJointActive] = useState(false);
   const [users, setUsers] = useState([]);
   const [activeUserId, setActiveUserId] = useState(0);
-  const [userMoney, setUserMoney] = useState("0");
-  const [activeUserName, setActiveUserName] = useState("");
+  const [currentMoney, setCurrentMoney] = useState("0");
   const [showQuestionPopup, setShowQuestionPopup] = useState("none");
   const [confirmFunction, setConfirmFunction] = useState(() => { });
   const [questionPopupMsg, setQuestionPopupMsg] = useState("");
@@ -56,6 +55,13 @@ function App() {
     }
   }, []);
 
+  const setCurrentListMoney = async () => {
+    setIsPending(true);
+    if (currentListType != 0) {
+      await invoke("get_list_type", { id: parseInt(currentListType) }).then(listType => setCurrentMoney(parseFloat(listType.list_money).toFixed(2).toString()));
+    }
+    setIsPending(false);
+  }
   useEffect(() => {
     setIsPending(true);
     switch (currentView) {
@@ -72,23 +78,29 @@ function App() {
         console.log("Invalid view: ", currentView);
         break;
     };
+    setCurrentListMoney();
     setIsPending(false);
   }, [listTypes, currentListType, currentView]);
 
   useEffect(() => {
-    document.querySelector(".new-list-tooltip-input").focus();
+    document.querySelector(".newlist-name-input").focus();
   }, [showTooltipInput]);
+
+  const updateListMoney = async (e) => {
+    if (isAllItemsActive == true || (isJointActive && !listTypes.find(list => list.id == currentListType).is_joint)) return;
+    if (e.key === "Enter") {
+      setIsPending(true);
+      await invoke("update_list_money", { listMoney: e.target.value.toString().replace(",", "."), userId: activeUserId, id: parseInt(currentListType) });
+      e.target.blur();
+      setIsPending(false);
+    }
+  }
 
   const runClear = async () => {
     setIsPending(true);
-    appWindow.setTitle("Ariculation");
-    setIsPending(true);
+    await updateCurrentView("Ariculation", "", { id: 0 });
     setItems([]);
-    unselectAllNavLinks();
     getUsers();
-    refreshListTypes();
-    setCurrentView("");
-    refreshListTypes();
     setIsPending(false);
   }
   const refreshListTypes = async (userId = null) => {
@@ -104,49 +116,36 @@ function App() {
       }
     });
   }
+  const updateCurrentView = async (windowTitle, currentView, user) => {
+    await unselectAllNavLinks();
+    await refreshListTypes(user.id);
+    appWindow.setTitle(windowTitle);
+    setCurrentView(currentView);
+    setActiveUserId(user.id);
+  }
   const showAllItems = async () => {
     setIsPending(true);
-    appWindow.setTitle("Ariculation - All Items");
-    setActiveUserId(0);
-    await refreshListTypes();
-    unselectAllNavLinks();
+    await updateCurrentView("Ariculation - All Items", "all", { id: 0 });
     setIsAllItemsActive(true);
-    setCurrentView("all");
     document.querySelector(".allItems-button").classList.add("site-nav-link-active");
     setIsPending(false);
   }
   const showJoint = async () => {
     setIsPending(true);
-    appWindow.setTitle("Ariculation - Joint");
-    setActiveUserId(0);
-    await refreshListTypes();
-    await unselectAllNavLinks();
+    await updateCurrentView("Ariculation - Joint", "joint", { id: 0 });
     setIsJointActive(true);
-    setCurrentView("joint");
     document.querySelector(".joint-button").classList.add("site-nav-link-active");
     setIsPending(false);
   }
   const showUser = async (user) => {
     setIsPending(true);
-    await invoke("get_user", { userId: user.id }).then(async user => {
-      appWindow.setTitle("Ariculation - " + user.name);
-      setActiveUserId(user.id);
-      setUserMoney(parseFloat(user.start_money).toFixed(2));
-      setActiveUserName(user.name);
-      await unselectAllNavLinks();
-      setCurrentView("user");
-      await refreshListTypes(user.id);
-      document.querySelector(".user-button-" + user.id).classList.add("site-nav-link-active");
-    });
+    await updateCurrentView("Ariculation - " + user.name, "user", user);
+    document.querySelector(".user-button-" + user.id).classList.add("site-nav-link-active");
     setIsPending(false);
   }
   const deleteItem = async (id) => {
     await invoke("delete_item", { id: id });
     setItems(items.filter(item => item.id != id));
-  }
-  const updateActiveUserMoney = async (money) => {
-    setUserMoney(money);
-    await invoke("update_user", { userId: activeUserId, name: activeUserName, startMoney: money.replace(",", ".") });
   }
   const openQuestionPopup = (item, question, confirmFunction) => {
     setShowQuestionPopup("block");
@@ -158,12 +157,6 @@ function App() {
     setIsJointActive(false);
     setIsAllItemsActive(false);
     document.querySelectorAll(".site-nav-link").forEach(link => link.classList.remove("site-nav-link-active"));
-  }
-  const clearJointItems = async () => {
-    setIsPending(true);
-    await invoke("remove_joint_entries");
-    showJoint();
-    setIsPending(false);
   }
   const handleSearchInput = async (e) => {
     setIsPending(true);
@@ -185,6 +178,10 @@ function App() {
     setIsPending(false);
   }
   const handleChangeListType = async (e) => {
+    if (listTypes.find(list => list.id == parseInt(e.target.value)).list_password.length > 0) {
+      alert("This list is password protected");
+      return;
+    }
     setIsPending(true);
     setCurrentListType(parseInt(e.target.value));
     setIsPending(false);
@@ -229,7 +226,7 @@ function App() {
         <div className="main-container">
           <div className="pending-loader" style={{display: isPending == true ? "block" : "none"}}></div>
           <div className="toolbar">
-            <input type="text" className="text-input" placeholder="Search ..." onChange={async (e) => { handleSearchInput(e) }}/>
+            <input type="search" results={"5"} name="s" className="text-input search-input" placeholder="Search ..." onChange={async (e) => { handleSearchInput(e) }}/>
             <div style={{display: "flex", gap: "5px"}}>
               <button className="add-item-button" style={{display: currentView != null && currentView != "" && !isAllItemsActive ? "flex" : "none"}} onClick={() => setShowAddItemPopup("block")}>Add item <i className="fa-solid fa-circle-plus"></i></button>
               <div className="list-type-container" style={{display: currentView != null && currentView != "" && !isAllItemsActive ? "flex" : "none"}}>
@@ -278,15 +275,7 @@ function App() {
           <div className="page-sum-footer">
             <div style={{display: "flex"}}>
               {"Start: "}
-              <input type="text" className="monthly-money-money" value={activeUserId != 0 ? userMoney.replace(".", ",") : monthlyMoney.toString().replace(".", ",")} onChange={
-                (e) => {
-                if (activeUserId != 0){
-                  updateActiveUserMoney(e.target.value)
-                }
-                else {
-                  setMonthlyMoney(e.target.value.length > 0 ? e.target.value : 0)
-                }
-              }}/>
+              <input type="text" className="monthly-money-money" value={currentMoney.toString().replace(".", ",")} onChange={(e) => setCurrentMoney(e.target.value)} onKeyUp={updateListMoney}/>
             </div>
             {/* {isJointActive ? (
             <button className="remove-joint-entries" onClick={() => openQuestionPopup({}, "Are you sure you want to remove all joint entries?", () => clearJointItems())}>
@@ -298,7 +287,7 @@ function App() {
               {items.length > 0 ? "Total:" : "No items"}
               <p style={{color: "white"}}>
                 {items.length > 0 ?
-                  (parseFloat(activeUserId != 0 ? userMoney.replace(",", ".") : monthlyMoney)
+                  parseFloat(parseFloat(currentMoney.toString().replace(",", "."))
                   +
                   items.filter(item => item.is_split == true).reduce((pre, item) => parseFloat(pre) + parseFloat(item.price) / users.length, 0)
                   +
@@ -346,7 +335,7 @@ function App() {
         confirmFunction={confirmFunction}
         msg={questionPopupMsg}
         item={currentItem} />
-      <TooltipInput
+      <NewListInput
         setShow={setShowTooltipInput}
         show={showTooltipInput}
         setListTypes={setListTypes}

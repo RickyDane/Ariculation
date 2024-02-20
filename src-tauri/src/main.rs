@@ -1,11 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use chrono::Local;
-use serde::Serialize;
 use sqlx::MySqlPool;
+use serde::Serialize;
 
 const DB_NAME: &str = "ariculation_prd";
-const DATABASE_URL: &str = "mysql://root:arickinda@192.168.2.178";
+const DATABASE_URL: &str = "mysql://root:root@localhost";
 
 fn main() {
     tauri::Builder::default()
@@ -24,7 +24,9 @@ fn main() {
             get_list_types,
             add_list_type,
             check_or_create_db,
-            delete_list_type
+            delete_list_type,
+            update_list_money,
+            get_list_type
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -61,6 +63,8 @@ struct List {
     name: String,
     user_id: i32,
     is_joint: bool,
+    list_money: f32,
+    list_password: String,
     last_modified: String
 }
 
@@ -84,7 +88,7 @@ async fn check_or_create_db() {
         .execute(&conn)
         .await
         .unwrap_or_default();
-    sqlx::query("CREATE TABLE tbl_list (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), user_id INT, is_joint BOOLEAN, last_modified VARCHAR(255), PRIMARY KEY (id))")
+    sqlx::query("CREATE TABLE tbl_list (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), user_id INT, is_joint BOOLEAN, list_money FLOAT, list_password TEXT, last_modified VARCHAR(255), PRIMARY KEY (id))")
         .execute(&conn)
         .await
         .unwrap_or_default();
@@ -246,13 +250,38 @@ async fn get_list_types() -> Vec<List> {
 }
 
 #[tauri::command]
-async fn add_list_type(name: String, user_id: i32, is_joint: bool) {
+async fn get_list_type(id: i32) -> List {
     let conn = get_db_connection().await;
-    sqlx::query("INSERT INTO tbl_list (name, user_id, is_joint, last_modified) VALUES (?, ?, ?, ?)")
+    let list_type = sqlx::query_as::<_, List>("SELECT * FROM tbl_list WHERE id = ?")
+        .bind(id)
+        .fetch_one(&conn)
+        .await
+        .unwrap();
+    return list_type;
+}
+
+#[tauri::command]
+async fn add_list_type(name: String, user_id: i32, is_joint: bool, list_money: String, list_password: String) {
+    let conn = get_db_connection().await;
+    sqlx::query("INSERT INTO tbl_list (name, user_id, is_joint, last_modified, list_money, list_password) VALUES (?, ?, ?, ?, ?, ?)")
         .bind(name)
         .bind(user_id)
         .bind(is_joint)
         .bind(Local::now().to_string())
+        .bind(list_money.parse::<f32>().unwrap())
+        .bind(list_password)
+        .execute(&conn)
+        .await
+        .unwrap();
+}
+
+#[tauri::command]
+async fn update_list_money(id: i32, list_money: String) {
+    println!("List Money: {}", &list_money);
+    let conn = get_db_connection().await;
+    sqlx::query("UPDATE tbl_list SET list_money = ? WHERE id = ?")
+        .bind(list_money.parse::<f32>().unwrap())
+        .bind(id)
         .execute(&conn)
         .await
         .unwrap();

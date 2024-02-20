@@ -262,6 +262,10 @@ body {
     padding: 10px;
     border-radius: 5px;
 }
+.search-input {
+    height: 35px;
+    padding-left: 5px;
+}
 .item-list {
     width: 100%;
     margin: 0 auto;
@@ -501,10 +505,13 @@ body {
     height: 40px;
 }
 
-.tooltip-input {
+.newlist-input-container {
+    display: flex;
+    flex-flow: column;
+    gap: 2px;
     width: fit-content;
-    padding: 5px;
     height: fit-content;
+    padding: 5px;
     box-shadow: 0px 0px 10px 1px rgba(0, 0, 0, 0.5);
     border-radius: 5px;
     position: absolute;
