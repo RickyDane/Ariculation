@@ -20,7 +20,6 @@ function App() {
   const [showAddUserPopup, setShowAddUserPopup] = useState("none");
   const [showTooltipInput, setShowTooltipInput] = useState("none");
   const [editItem, setEditItem] = useState({});
-  const [monthlyMoney, setMonthlyMoney] = useState(0);
   const [isAllItemsActive, setIsAllItemsActive] = useState(true);
   const [isJointActive, setIsJointActive] = useState(false);
   const [users, setUsers] = useState([]);
@@ -36,7 +35,11 @@ function App() {
   const [isPending, setIsPending] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState("none");
   const [currentUserFilter, setCurrentUserFilter] = useState(0);
+  const [appConfig, setAppConfig] = useState({});
 
+  useEffect(() => {
+    console.log(appConfig);
+  }, [appConfig]);
   const getUsers = async () => {
     await invoke("get_users").then(users => setUsers(users));
   }
@@ -51,6 +54,7 @@ function App() {
   useEffect(() => {
     if (IsAppFirstRun == true) {
       checkOrCreateDB();
+      invoke("get_app_config").then(config => setAppConfig(config));
     }
   }, []);
   const setCurrentListMoney = async () => {
@@ -79,11 +83,9 @@ function App() {
     setCurrentListMoney();
     setIsPending(false);
   }, [listTypes, currentListType, currentView]);
-
   useEffect(() => {
     document.querySelector(".newlist-name-input").focus();
   }, [showTooltipInput]);
-
   const updateListMoney = async (e) => {
     if (isAllItemsActive == true || (isJointActive && !listTypes.find(list => list.id == currentListType).is_joint)) return;
     if (e.key === "Enter") {
@@ -93,7 +95,6 @@ function App() {
       setIsPending(false);
     }
   }
-
   const runClear = async () => {
     setIsPending(true);
     await updateCurrentView("Ariculation", "", { id: 0 });
@@ -375,7 +376,9 @@ function App() {
         activeUserId={activeUserId}
         listTypes={listTypes}
         setCurrentListType={setCurrentListType}
-        />
+        appConfig={appConfig}
+        setAppConfig={setAppConfig}
+        runClear={runClear}/>
     </>
   );
 }

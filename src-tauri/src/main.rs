@@ -1,11 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::{fs::{self, create_dir, File}, io::{BufReader, Read, Write}};
 use chrono::Local;
 use sqlx::MySqlPool;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use tauri::api::path::config_dir;
 
+static mut DATABASE_URL: String = String::new();
 const DB_NAME: &str = "ariculation_prd";
-const DATABASE_URL: &str = "mysql://root:root@localhost";
 
 fn main() {
     tauri::Builder::default()
@@ -27,7 +29,9 @@ fn main() {
             delete_list_type,
             update_list_money,
             get_list_type,
-            get_userfiltered_items
+            get_userfiltered_items,
+            update_app_config,
+            get_app_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -71,13 +75,44 @@ struct List {
 
 #[tauri::command]
 async fn check_or_create_db() {
-    let conn = MySqlPool::connect(DATABASE_URL).await.unwrap();
+    unsafe {
+    let _ = create_dir(
+        config_dir()
+            .unwrap()
+            .join("ariculation")
+            .to_str()
+            .unwrap()
+            .to_string()
+    );
+    if fs::metadata(config_dir().unwrap().join("ariculation/app_config.json")).is_err() {
+        let _ = File::create(config_dir().unwrap().join("ariculation/app_config.json"));
+        let app_config_json = AppConfig {
+            db_name: "ariculation_prd".to_string(),
+            db_url: "root:root@localhost:3306".to_string()
+        };
+        let _ = serde_json::to_writer_pretty(
+            File::create(
+                config_dir()
+                    .unwrap()
+                    .join("ariculation/app_config.json")
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+            )
+            .unwrap(),
+            &app_config_json,
+        );
+    }
+    DATABASE_URL = get_app_config().await.db_url;
+    let conn = MySqlPool::connect(format!("mysql://{}", &DATABASE_URL).as_str()).await.unwrap_or_else(|_| {
+        panic!("Could not connect to database");
+    });
     // create db if not exists
     sqlx::query("CREATE DATABASE IF NOT EXISTS ariculation_prd")
         .execute(&conn)
         .await
         .unwrap_or_default();
-    let conn = MySqlPool::connect(format!("{}/{}", DATABASE_URL, DB_NAME).as_str())
+    let conn = MySqlPool::connect(format!("mysql://{}/{}", &DATABASE_URL, &DB_NAME).as_str())
         .await
         .unwrap();
     // create tabes if not exists
@@ -93,10 +128,13 @@ async fn check_or_create_db() {
         .execute(&conn)
         .await
         .unwrap_or_default();
+    }
 }
 
 async fn get_db_connection() -> MySqlPool {
-    MySqlPool::connect(format!("{}/{}", DATABASE_URL, DB_NAME).as_str()).await.unwrap()
+    unsafe {
+        MySqlPool::connect(format!("mysql://{}/{}", DATABASE_URL, DB_NAME).as_str()).await.expect("Could not connect to database")
+    }
 }
 
 #[tauri::command]
@@ -333,4 +371,35 @@ async fn get_userfiltered_items(user_id: i32, list_type: i32, is_all_items: bool
             .unwrap();
         return items;
     }
+}
+
+#[derive(Debug)]
+#[derive(Deserialize, Serialize)]
+struct AppConfig {
+    db_name: String,
+    db_url: String
+}
+
+#[tauri::command]
+async fn update_app_config(db_url: String) {
+    unsafe {
+        let app_config = AppConfig {
+            db_url: db_url.clone(),
+            db_name: DB_NAME.to_string()
+        };
+        DATABASE_URL = db_url.clone();
+        let app_config_json = serde_json::to_value(&app_config).unwrap();
+        let file = File::create(config_dir().expect("could not get config dir").join("ariculation/app_config.json")).unwrap();
+        let _ = serde_json::to_writer_pretty(file, &app_config_json);
+        println!("appconfig: {:?}", app_config);
+        println!("appconfig location: {}", config_dir().expect("could not get config dir").join("ariculation/app_config.json").to_str().unwrap());
+    }
+}
+
+#[tauri::command]
+async fn get_app_config() -> AppConfig {
+    let file = File::open(config_dir().expect("could not get config dir").join("ariculation/app_config.json")).unwrap();
+    let reader = BufReader::new(file);
+    let app_config = serde_json::from_reader(reader).unwrap();
+    return app_config;
 }
