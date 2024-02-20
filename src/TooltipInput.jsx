@@ -11,7 +11,7 @@ function TooltipInput(props) {
           props.setIsPending(true);
           if (e.key === "Enter" && listName.length >= 3) {
             props.setShow("none");
-            await invoke("add_list_type", { name: listName, userId: props.activeUserId, isJoint: props.isJoint }).then(async () => {
+            await invoke("add_list_type", { name: listName, userId: props.activeUserId, isJoint: props.isJoint, listMoney: "0.0", listPassword: "" }).then(async () => {
               await invoke("get_list_types").then(types => props.setListTypes(types))
             });
             setListName("");
