@@ -10,6 +10,7 @@ import AddUserPopup from "./AddUserPopup";
 import QuestionPopup from "./QuestionPopup";
 import NewListInput from "./NewListInput";
 import SettingsPopup from "./SettingsPopup";
+import AskPasswordInput from "./AskPasswordInput.jsx";
 
 let IsAppFirstRun = true;
 
@@ -36,6 +37,9 @@ function App() {
   const [showSettingsPopup, setShowSettingsPopup] = useState("none");
   const [currentUserFilter, setCurrentUserFilter] = useState(0);
   const [appConfig, setAppConfig] = useState({});
+  const [showAskPasswordInput, setShowAskPasswordInput] = useState("none");
+  const [typedInPassword, setTypedInPassword] = useState("");
+  const [listToCheck, setListToCheck] = useState({});
 
   const getUsers = async () => {
     await invoke("get_users").then(users => setUsers(users));
@@ -65,7 +69,10 @@ function App() {
     setIsPending(true);
     switch (currentView) {
       case "all":
-        invoke("get_all_items", { listType: parseInt(currentListType) }).then(items => setItems(items));
+        invoke("get_all_items", { listType: parseInt(currentListType) }).then(items => {
+          setItems(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+          console.log(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+        });
         break;
       case "user":
         invoke("get_user_items", { userId: activeUserId, listType: parseInt(currentListType) }).then(items => setItems(items));
@@ -174,8 +181,10 @@ function App() {
     setIsPending(false);
   }
   const handleChangeListType = async (e) => {
+    console.log(e.target.value);
     if (listTypes.find(list => list.id == parseInt(e.target.value)).list_password.length > 0) {
-      alert("This list is password protected");
+      setListToCheck(listTypes.find(list => list.id == parseInt(e.target.value)));
+      setShowAskPasswordInput("flex");
       return;
     }
     setIsPending(true);
@@ -187,9 +196,21 @@ function App() {
   }
   useEffect(() => {
     setIsPending(true);
-    invoke("get_userfiltered_items", { listType: parseInt(currentListType), userId: parseInt(currentUserFilter), isAllItems: isAllItemsActive }).then(items => setItems(items));
+    invoke("get_userfiltered_items", { listType: parseInt(currentListType), userId: parseInt(currentUserFilter), isAllItems: isAllItemsActive }).then(items => {
+      setItems(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+      console.log(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+    });
     setIsPending(false);
   }, [currentUserFilter]);
+  const handlePasswordInput = async () => {
+    if (listToCheck.list_password == typedInPassword) {
+      setShowAskPasswordInput("none");
+      setIsPending(true);
+      setCurrentListType(listToCheck.id);
+      setIsPending(false);
+    }
+  }
+
 
   return (
     <>
@@ -376,6 +397,16 @@ function App() {
         appConfig={appConfig}
         setAppConfig={setAppConfig}
         runClear={runClear}/>
+      <AskPasswordInput
+        users={users}
+        setShow={setShowAskPasswordInput}
+        show={showAskPasswordInput}
+        setIsPending={setIsPending}
+        activeUserId={activeUserId}
+        runClear={runClear}
+        password={typedInPassword}
+        setPassword={setTypedInPassword}
+        handlePasswordInput={handlePasswordInput}/>
     </>
   );
 }

@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{fs::{self, create_dir, File}, io::{BufReader, Read, Write}};
+use std::{fs::{self, create_dir, File}, io::BufReader};
 use chrono::Local;
 use sqlx::MySqlPool;
 use serde::{Deserialize, Serialize};
@@ -48,7 +48,8 @@ struct Item {
     price: f32,
     is_split: bool,
     is_visible_on_user: bool,
-    user_id: i32
+    user_id: i32,
+    list_type: i32
 }
 #[derive(Debug)]
 #[derive(Serialize)]
