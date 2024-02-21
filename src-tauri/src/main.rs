@@ -335,6 +335,12 @@ async fn delete_list_type(id: i32) {
         .execute(&conn)
         .await
         .unwrap();
+    sqlx::query("DELETE FROM tbl_items WHERE list_type = ?")
+        .bind(id)
+        .execute(&conn)
+        .await
+        .unwrap();
+    println!("List Type {} Deleted", id);
 }
 
 #[tauri::command]

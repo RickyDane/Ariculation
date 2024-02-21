@@ -53,10 +53,12 @@ function SettingsPopup(props) {
                     + "?"
                   );
                   if (isDeleteList == true) {
-                    props.setIsPending(true);
-                    await invoke("delete_list_type", {id: parseInt(selectedList)});
-                    await invoke("get_list_types").then(listTypes => { props.setListTypes(listTypes); setLists(listTypes); setSelectedList(listTypes[0].id); props.setCurrentListType(listTypes[0].id) });
-                    props.setIsPending(false);
+                    if (await confirm("All items in this list will be deleted. Are you sure?")) {
+                      props.setIsPending(true);
+                      await invoke("delete_list_type", {id: parseInt(selectedList)});
+                      await invoke("get_list_types").then(listTypes => { props.setListTypes(listTypes); setLists(listTypes); setSelectedList(listTypes[0].id); props.setCurrentListType(listTypes[0].id) });
+                      props.setIsPending(false);
+                    }
                   }
                 }}>
                   <i className="fa-solid fa-trash"></i>
