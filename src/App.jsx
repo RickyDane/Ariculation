@@ -10,6 +10,7 @@ import AddUserPopup from "./AddUserPopup";
 import QuestionPopup from "./QuestionPopup";
 import NewListInput from "./NewListInput";
 import SettingsPopup from "./SettingsPopup";
+import AskPasswordInput from "./AskPasswordInput.jsx";
 
 let IsAppFirstRun = true;
 
@@ -20,7 +21,6 @@ function App() {
   const [showAddUserPopup, setShowAddUserPopup] = useState("none");
   const [showTooltipInput, setShowTooltipInput] = useState("none");
   const [editItem, setEditItem] = useState({});
-  const [monthlyMoney, setMonthlyMoney] = useState(0);
   const [isAllItemsActive, setIsAllItemsActive] = useState(true);
   const [isJointActive, setIsJointActive] = useState(false);
   const [users, setUsers] = useState([]);
@@ -36,6 +36,10 @@ function App() {
   const [isPending, setIsPending] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState("none");
   const [currentUserFilter, setCurrentUserFilter] = useState(0);
+  const [appConfig, setAppConfig] = useState({});
+  const [showAskPasswordInput, setShowAskPasswordInput] = useState("none");
+  const [typedInPassword, setTypedInPassword] = useState("");
+  const [listToCheck, setListToCheck] = useState({});
 
   const getUsers = async () => {
     await invoke("get_users").then(users => setUsers(users));
@@ -51,6 +55,7 @@ function App() {
   useEffect(() => {
     if (IsAppFirstRun == true) {
       checkOrCreateDB();
+      invoke("get_app_config").then(config => setAppConfig(config));
     }
   }, []);
   const setCurrentListMoney = async () => {
@@ -64,7 +69,10 @@ function App() {
     setIsPending(true);
     switch (currentView) {
       case "all":
-        invoke("get_all_items", { listType: parseInt(currentListType) }).then(items => setItems(items));
+        invoke("get_all_items", { listType: parseInt(currentListType) }).then(items => {
+          setItems(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+          console.log(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+        });
         break;
       case "user":
         invoke("get_user_items", { userId: activeUserId, listType: parseInt(currentListType) }).then(items => setItems(items));
@@ -79,11 +87,9 @@ function App() {
     setCurrentListMoney();
     setIsPending(false);
   }, [listTypes, currentListType, currentView]);
-
   useEffect(() => {
     document.querySelector(".newlist-name-input").focus();
   }, [showTooltipInput]);
-
   const updateListMoney = async (e) => {
     if (isAllItemsActive == true || (isJointActive && !listTypes.find(list => list.id == currentListType).is_joint)) return;
     if (e.key === "Enter") {
@@ -93,7 +99,6 @@ function App() {
       setIsPending(false);
     }
   }
-
   const runClear = async () => {
     setIsPending(true);
     await updateCurrentView("Ariculation", "", { id: 0 });
@@ -176,8 +181,10 @@ function App() {
     setIsPending(false);
   }
   const handleChangeListType = async (e) => {
+    console.log(e.target.value);
     if (listTypes.find(list => list.id == parseInt(e.target.value)).list_password.length > 0) {
-      alert("This list is password protected");
+      setListToCheck(listTypes.find(list => list.id == parseInt(e.target.value)));
+      setShowAskPasswordInput("flex");
       return;
     }
     setIsPending(true);
@@ -189,9 +196,21 @@ function App() {
   }
   useEffect(() => {
     setIsPending(true);
-    invoke("get_userfiltered_items", { listType: parseInt(currentListType), userId: parseInt(currentUserFilter), isAllItems: isAllItemsActive }).then(items => setItems(items));
+    invoke("get_userfiltered_items", { listType: parseInt(currentListType), userId: parseInt(currentUserFilter), isAllItems: isAllItemsActive }).then(items => {
+      setItems(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+      console.log(items.filter(item => item.list_type != listTypes.find(list => list.list_password != "").id));
+    });
     setIsPending(false);
   }, [currentUserFilter]);
+  const handlePasswordInput = async () => {
+    if (listToCheck.list_password == typedInPassword) {
+      setShowAskPasswordInput("none");
+      setIsPending(true);
+      setCurrentListType(listToCheck.id);
+      setIsPending(false);
+    }
+  }
+
 
   return (
     <>
@@ -238,7 +257,7 @@ function App() {
                     <option key={listType.id} value={listType.id}>{listType.name}{isJointActive && users.find(user => user.id == listType.user_id)?.name != null ? " - " + users.find(user => user.id == listType.user_id)?.name : ""}</option>
                   ))}
                 </select>
-                <button className="add-list-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-plus"></i></button>
+                <button className="add-list-button concat-button" onClick={() => setShowTooltipInput("block")}><i className="fa-solid fa-plus"></i></button>
               </div>
             </div>
           </div>
@@ -375,7 +394,19 @@ function App() {
         activeUserId={activeUserId}
         listTypes={listTypes}
         setCurrentListType={setCurrentListType}
-        />
+        appConfig={appConfig}
+        setAppConfig={setAppConfig}
+        runClear={runClear}/>
+      <AskPasswordInput
+        users={users}
+        setShow={setShowAskPasswordInput}
+        show={showAskPasswordInput}
+        setIsPending={setIsPending}
+        activeUserId={activeUserId}
+        runClear={runClear}
+        password={typedInPassword}
+        setPassword={setTypedInPassword}
+        handlePasswordInput={handlePasswordInput}/>
     </>
   );
 }

@@ -22,6 +22,8 @@ function SettingsPopup(props) {
     setSelectedList(e.target.value);
   }
 
+
+
   return (
     <>
       <div className="add-item-popup" style={{display: props.show}}>
@@ -39,23 +41,51 @@ function SettingsPopup(props) {
                     <option key={listType.id} value={listType.id}>{listType.name} - {users.find(user => user.id == listType.user_id)?.name}</option>
                   ))}
                 </select>
-                <button className="add-list-button add-item-popup-button-cancel" style={{height: "33px", color: "red"}} onClick={async () => {
-                  let isDeleteList = await confirm("Delete: " + lists.find(list => list.id == selectedList).name + " - " + users.find(user => user.id == lists.find(list => list.id == selectedList).user_id).name + "?");
+                <button className="add-list-button add-item-popup-button-cancel" style={{width: "38px", color: "red"}} onClick={async () => {
+                  let isDeleteList = await confirm(
+                    "Delete: "
+                    + lists.find(list => list.id == selectedList).name
+                    + (
+                        users.find(user => user.id == lists.find(list => list.id == selectedList)?.user_id)?.name != null
+                        ? " - " + users.find(user => user.id == lists.find(list => list.id == selectedList)?.user_id).name
+                        : ""
+                      )
+                    + "?"
+                  );
                   if (isDeleteList == true) {
-                    props.setIsPending(true);
-                    await invoke("delete_list_type", {id: parseInt(selectedList)});
-                    await invoke("get_list_types").then(listTypes => { props.setListTypes(listTypes); setLists(listTypes); setSelectedList(listTypes[0].id); props.setCurrentListType(listTypes[0].id) });
-                    props.setIsPending(false);
+                    if (await confirm("All items in this list will be deleted. Are you sure?")) {
+                      props.setIsPending(true);
+                      await invoke("delete_list_type", {id: parseInt(selectedList)});
+                      await invoke("get_list_types").then(listTypes => { props.setListTypes(listTypes); setLists(listTypes); setSelectedList(listTypes[0].id); props.setCurrentListType(listTypes[0].id) });
+                      props.setIsPending(false);
+                    }
                   }
                 }}>
-                <i className="fa-solid fa-trash"></i></button>
+                  <i className="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div style={{width: "100%"}}>
+              <p style={{color: "white"}}>Database Url</p>
+              <br/>
+              <div style={{display: "flex", flexFlow: "row"}}>
+                <input type="text" className="add-item-popup-input" style={{borderRadius: "5px 0px 0px 5px"}} placeholder="dbuser:password@localhost:3306" value={props.appConfig.db_url} onChange={(e) => props.setAppConfig({...props.appConfig, db_url: e.target.value})} />
+                <button className="add-list-button concat-button" style={{backgroundColor: "#333", width: "48px", color: "white", borderRadius: "0px 5px 5px 0px", margin: "0 auto"}} onClick={async () => {
+                  props.setIsPending(true);
+                  await invoke("update_app_config", { dbUrl: props.appConfig.db_url });
+                  props.runClear();
+                  props.setIsPending(false);
+                }}>
+                  <i className="fa-solid fa-save"></i>
+                </button>
               </div>
             </div>
           </div>
+          <br/>
           <div className="add-item-popup-footer">
             <div></div>
             <div className="add-item-popup-button-container">
-              <button className="add-item-popup-button add-item-popup-button-confirm" style={{color: "white"}} onClick={() => props.setShow("none")}>Close</button>
+              <button className="add-item-popup-button add-item-popup-button-confirm" style={{color: "white", display: "flex", gap: "10px", alignItems: "center"}} onClick={() => props.setShow("none")}><i className="fa-solid fa-xmark"></i> Close</button>
               {/* <button className="add-item-popup-button add-item-popup-button-cancel" style={{color: "red"}} onClick={() => { props.confirmFunction(); props.setShow("none"); }}><i className="fa-solid fa-trash-can"></i></button> */}
             </div>
           </div>
