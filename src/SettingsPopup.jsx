@@ -130,7 +130,7 @@ function SettingsPopup(props) {
 									type="text"
 									className="add-item-popup-input"
 									style={{ borderRadius: "5px 0px 0px 5px" }}
-									placeholder="dbuser:password@localhost:3306"
+									placeholder="dbuser:password@localhost:3306/dbname"
 									value={props.appConfig.db_url}
 									onChange={(e) =>
 										props.setAppConfig({

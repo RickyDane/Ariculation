@@ -440,29 +440,27 @@ struct AppConfig {
 
 #[tauri::command]
 async fn update_app_config(db_url: String) {
-    unsafe {
-        let app_config = AppConfig {
-            db_url: db_url.clone(),
-            db_name: "".into(),
-        };
-        let app_config_json = serde_json::to_value(&app_config).unwrap();
-        let file = File::create(
-            config_dir()
-                .expect("could not get config dir")
-                .join("ariculation/app_config.json"),
-        )
-        .unwrap();
-        let _ = serde_json::to_writer_pretty(file, &app_config_json);
-        println!("appconfig: {:?}", app_config);
-        println!(
-            "appconfig location: {}",
-            config_dir()
-                .expect("could not get config dir")
-                .join("ariculation/app_config.json")
-                .to_str()
-                .unwrap()
-        );
-    }
+    let app_config = AppConfig {
+        db_url: db_url.clone(),
+        db_name: "".into(),
+    };
+    let app_config_json = serde_json::to_value(&app_config).unwrap();
+    let file = File::create(
+        config_dir()
+            .expect("could not get config dir")
+            .join("ariculation/app_config.json"),
+    )
+    .unwrap();
+    let _ = serde_json::to_writer_pretty(file, &app_config_json);
+    println!("appconfig: {:?}", app_config);
+    println!(
+        "appconfig location: {}",
+        config_dir()
+            .expect("could not get config dir")
+            .join("ariculation/app_config.json")
+            .to_str()
+            .unwrap()
+    );
     check_or_create_db().await;
 }
 
