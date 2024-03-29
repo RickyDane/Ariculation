@@ -1,13 +1,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{fs::{self, create_dir, File}, io::BufReader};
 use chrono::Local;
-use sqlx::MySqlPool;
 use serde::{Deserialize, Serialize};
+use sqlx::{Error, MySqlPool};
+use std::{
+    fs::{self, create_dir, File},
+    io::BufReader,
+};
 use tauri::api::path::config_dir;
 
 static mut DATABASE_URL: String = String::new();
-const DB_NAME: &str = "ariculation_prd";
+// const DB_NAME: &str = "ariculation_prd";
 
 fn main() {
     tauri::Builder::default()
@@ -37,9 +40,7 @@ fn main() {
         .expect("error while running tauri application");
 }
 
-#[derive(Debug)]
-#[derive(Serialize)]
-#[derive(sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 struct Item {
     id: i32,
     name: String,
@@ -49,11 +50,9 @@ struct Item {
     is_split: bool,
     is_visible_on_user: bool,
     user_id: i32,
-    list_type: i32
+    list_type: i32,
 }
-#[derive(Debug)]
-#[derive(Serialize)]
-#[derive(sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 struct User {
     id: i32,
     name: String,
@@ -61,9 +60,7 @@ struct User {
     ref_id: String,
     last_modified: String,
 }
-#[derive(Debug)]
-#[derive(Serialize)]
-#[derive(sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 struct List {
     id: i32,
     name: String,
@@ -71,77 +68,112 @@ struct List {
     is_joint: bool,
     list_money: f32,
     list_password: String,
-    last_modified: String
+    last_modified: String,
 }
 
 #[tauri::command]
 async fn check_or_create_db() {
     unsafe {
-    let _ = create_dir(
-        config_dir()
-            .unwrap()
-            .join("ariculation")
-            .to_str()
-            .unwrap()
-            .to_string()
-    );
-    if fs::metadata(config_dir().unwrap().join("ariculation/app_config.json")).is_err() {
-        let _ = File::create(config_dir().unwrap().join("ariculation/app_config.json"));
-        let app_config_json = AppConfig {
-            db_name: "ariculation_prd".to_string(),
-            db_url: "root:root@localhost:3306".to_string()
-        };
-        let _ = serde_json::to_writer_pretty(
-            File::create(
-                config_dir()
-                    .unwrap()
-                    .join("ariculation/app_config.json")
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
-            )
-            .unwrap(),
-            &app_config_json,
+        let _ = create_dir(
+            config_dir()
+                .unwrap()
+                .join("ariculation")
+                .to_str()
+                .unwrap()
+                .to_string(),
         );
-    }
-    DATABASE_URL = get_app_config().await.db_url;
-    let conn = MySqlPool::connect(format!("mysql://{}", &DATABASE_URL).as_str()).await.unwrap_or_else(|_| {
-        panic!("Could not connect to database");
-    });
-    // create db if not exists
-    sqlx::query("CREATE DATABASE IF NOT EXISTS ariculation_prd")
-        .execute(&conn)
-        .await
-        .unwrap_or_default();
-    let conn = MySqlPool::connect(format!("mysql://{}/{}", &DATABASE_URL, &DB_NAME).as_str())
-        .await
-        .unwrap();
-    // create tabes if not exists
-    sqlx::query("CREATE TABLE tbl_items (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), category VARCHAR(255), description TEXT, price FLOAT, is_split BOOLEAN, is_joint BOOLEAN, user_id INT, last_modified VARCHAR(255), is_visible_on_user BOOLEAN, list_type INT, PRIMARY KEY (id))")
-        .execute(&conn)
-        .await
-        .unwrap_or_default();
-    sqlx::query("CREATE TABLE tbl_user (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), start_money FLOAT, ref_id varchar(255), last_modified VARCHAR(255), PRIMARY KEY (id))")
-        .execute(&conn)
-        .await
-        .unwrap_or_default();
-    sqlx::query("CREATE TABLE tbl_list (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), user_id INT, is_joint BOOLEAN, list_money FLOAT, list_password TEXT, last_modified VARCHAR(255), PRIMARY KEY (id))")
-        .execute(&conn)
-        .await
-        .unwrap_or_default();
+        if fs::metadata(config_dir().unwrap().join("ariculation/app_config.json")).is_err() {
+            let _ = File::create(config_dir().unwrap().join("ariculation/app_config.json"));
+            let app_config_json = AppConfig {
+                db_name: "ariculation_prd".to_string(),
+                db_url: "dbuser:dbpassword@dbserver:dbport".to_string(),
+            };
+            let _ = serde_json::to_writer_pretty(
+                File::create(
+                    config_dir()
+                        .unwrap()
+                        .join("ariculation/app_config.json")
+                        .to_str()
+                        .unwrap()
+                        .to_string(),
+                )
+                .unwrap(),
+                &app_config_json,
+            );
+        }
+        DATABASE_URL = get_app_config().await.db_url;
+        if DATABASE_URL != "dbuser:dbpassword@dbserver:dbport" && !DATABASE_URL.is_empty() {
+            let conn = MySqlPool::connect(
+                format!("mysql://{}", &DATABASE_URL.split("/").nth(0).unwrap()).as_str(),
+            )
+            .await
+            .expect("could not connect to db");
+            println!(
+                "\nSearching for database: {}",
+                &DATABASE_URL.split("/").last().unwrap()
+            );
+            println!("Database URL: {}", DATABASE_URL.split("/").nth(0).unwrap());
+            println!(
+                "Database name: {}\n",
+                DATABASE_URL.split("/").last().unwrap()
+            );
+            // create db if not exists
+            sqlx::query(
+                format!(
+                    "{} {}",
+                    "CREATE DATABASE IF NOT EXISTS",
+                    DATABASE_URL.split("/").last().unwrap()
+                )
+                .as_str(),
+            )
+            .execute(&conn)
+            .await
+            .unwrap_or_default();
+            let conn = MySqlPool::connect(format!("mysql://{}", &DATABASE_URL).as_str())
+                .await
+                .unwrap();
+            // create tables if not exists
+            sqlx::query("CREATE TABLE tbl_items (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), category VARCHAR(255), description TEXT, price FLOAT, is_split BOOLEAN, is_joint BOOLEAN, user_id INT, last_modified VARCHAR(255), is_visible_on_user BOOLEAN, visible_on_user_list BOOLEAN, list_type INT, PRIMARY KEY (id))")
+                .execute(&conn)
+                .await
+                .unwrap_or_default();
+            sqlx::query("CREATE TABLE tbl_user (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), start_money FLOAT, ref_id varchar(255), last_modified VARCHAR(255), PRIMARY KEY (id))")
+                .execute(&conn)
+                .await
+                .unwrap_or_default();
+            sqlx::query("CREATE TABLE tbl_list (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), user_id INT, is_joint BOOLEAN, list_money FLOAT, list_password TEXT, last_modified VARCHAR(255), PRIMARY KEY (id))")
+                .execute(&conn)
+                .await
+                .unwrap_or_default();
+        }
     }
 }
 
-async fn get_db_connection() -> MySqlPool {
+async fn get_db_connection() -> Result<MySqlPool, Error> {
     unsafe {
-        MySqlPool::connect(format!("mysql://{}/{}", DATABASE_URL, DB_NAME).as_str()).await.expect("Could not connect to database")
+        Ok(
+            MySqlPool::connect(format!("mysql://{}", DATABASE_URL).as_str())
+                .await
+                .expect("Could not connect to database"),
+        )
     }
 }
 
 #[tauri::command]
-async fn add_item(name: String, description: String, price: String, category: String, is_split: bool, is_joint: bool, user_id: i32, is_visible_on_user: bool, list_type: i32) {
-    let conn = get_db_connection().await;
-    sqlx::query("INSERT INTO tbl_items (name, category, description, price, is_split, is_joint, user_id, last_modified, is_visible_on_user, list_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+async fn add_item(
+    name: String,
+    description: String,
+    price: String,
+    category: String,
+    is_split: bool,
+    is_joint: bool,
+    user_id: u32,
+    is_visible_on_user: bool,
+    list_type: u32,
+    visible_on_user_list: u32,
+) {
+    let conn = get_db_connection().await.unwrap();
+    sqlx::query("INSERT INTO tbl_items (name, category, description, price, is_split, is_joint, user_id, last_modified, is_visible_on_user, list_type, visible_on_user_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(name)
         .bind(category)
         .bind(description)
@@ -152,6 +184,7 @@ async fn add_item(name: String, description: String, price: String, category: St
         .bind(Local::now().to_string())
         .bind(is_visible_on_user)
         .bind(list_type)
+        .bind(visible_on_user_list)
         .execute(&conn)
         .await
         .unwrap();
@@ -159,20 +192,22 @@ async fn add_item(name: String, description: String, price: String, category: St
 
 #[tauri::command]
 async fn get_items(is_split: bool, is_joint: bool, list_type: i32) -> Vec<Item> {
-    let conn = get_db_connection().await;
-    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ? AND (is_joint = ? OR is_split = ?)")
-        .bind(list_type)
-        .bind(is_joint)
-        .bind(is_split)
-        .fetch_all(&conn)
-        .await
-        .unwrap();
+    let conn = get_db_connection().await.unwrap();
+    let items = sqlx::query_as::<_, Item>(
+        "SELECT * FROM tbl_items WHERE list_type = ? AND (is_joint = ? OR is_split = ?)",
+    )
+    .bind(list_type)
+    .bind(is_joint)
+    .bind(is_split)
+    .fetch_all(&conn)
+    .await
+    .unwrap();
     return items;
 }
 
 #[tauri::command]
 async fn get_all_items() -> Vec<Item> {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items")
         .fetch_all(&conn)
         .await
@@ -181,8 +216,18 @@ async fn get_all_items() -> Vec<Item> {
 }
 
 #[tauri::command]
-async fn update_item(id: i32, name: String, description: String, price: String, category: String, is_split: bool, user_id: i32, is_visible_on_user: bool, list_type: i32) {
-    let conn = get_db_connection().await;
+async fn update_item(
+    id: i32,
+    name: String,
+    description: String,
+    price: String,
+    category: String,
+    is_split: bool,
+    user_id: i32,
+    is_visible_on_user: bool,
+    list_type: i32,
+) {
+    let conn = get_db_connection().await.unwrap();
     sqlx::query("UPDATE tbl_items SET name = ?, category = ?, description = ?, price = ?, is_split = ?, last_modified = ?, is_visible_on_user = ?, user_id = ?, list_type = ? WHERE id = ?")
         .bind(name)
         .bind(category)
@@ -201,7 +246,7 @@ async fn update_item(id: i32, name: String, description: String, price: String, 
 
 #[tauri::command]
 async fn delete_item(id: i32) {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     sqlx::query("DELETE FROM tbl_items WHERE id = ?")
         .bind(id)
         .execute(&conn)
@@ -211,7 +256,7 @@ async fn delete_item(id: i32) {
 
 #[tauri::command]
 async fn get_users() -> Vec<User> {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     let users = sqlx::query_as::<_, User>("SELECT * FROM tbl_user")
         .fetch_all(&conn)
         .await
@@ -221,23 +266,25 @@ async fn get_users() -> Vec<User> {
 
 #[tauri::command]
 async fn add_user(name: String, start_money: String, ref_id: String) {
-    let conn = get_db_connection().await;
-    sqlx::query("INSERT INTO tbl_user (name, start_money, last_modified, ref_id) VALUES (?, ?, ?, ?)")
-        .bind(name)
-        .bind(start_money.parse::<f32>().unwrap())
-        .bind(Local::now().to_string())
-        .bind(ref_id)
-        .execute(&conn)
-        .await
-        .unwrap();
+    let conn = get_db_connection().await.unwrap();
+    sqlx::query(
+        "INSERT INTO tbl_user (name, start_money, last_modified, ref_id) VALUES (?, ?, ?, ?)",
+    )
+    .bind(name)
+    .bind(start_money.parse::<f32>().unwrap())
+    .bind(Local::now().to_string())
+    .bind(ref_id)
+    .execute(&conn)
+    .await
+    .unwrap();
 }
 
 #[tauri::command]
 async fn get_user_items(user_id: i32, list_type: i32) -> Vec<Item> {
-    let conn = get_db_connection().await;
-    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ? AND ((user_id = ? AND is_visible_on_user = true) OR (user_id = ? OR is_split = true))")
+    let conn = get_db_connection().await.unwrap();
+    let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ? OR visible_on_user_list = ? AND (is_visible_on_user = true OR is_split = true) AND user_id = ?")
         .bind(list_type)
-        .bind(user_id)
+        .bind(list_type)
         .bind(user_id)
         .fetch_all(&conn)
         .await
@@ -248,7 +295,7 @@ async fn get_user_items(user_id: i32, list_type: i32) -> Vec<Item> {
 #[tauri::command]
 async fn update_user(user_id: i32, name: String, start_money: String) {
     println!("Name: {}, Start Money: {}", &name, &start_money);
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     sqlx::query("UPDATE tbl_user SET name = ?, start_money = ?, last_modified = ? WHERE id = ?")
         .bind(name)
         .bind(start_money.parse::<f32>().unwrap())
@@ -261,7 +308,7 @@ async fn update_user(user_id: i32, name: String, start_money: String) {
 
 #[tauri::command]
 async fn get_user(user_id: i32) -> User {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     let user = sqlx::query_as::<_, User>("SELECT * FROM tbl_user WHERE id = ?")
         .bind(user_id)
         .fetch_one(&conn)
@@ -272,7 +319,7 @@ async fn get_user(user_id: i32) -> User {
 
 #[tauri::command]
 async fn remove_joint_entries() {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     sqlx::query("DELETE FROM tbl_items WHERE is_joint = true")
         .execute(&conn)
         .await
@@ -281,7 +328,7 @@ async fn remove_joint_entries() {
 
 #[tauri::command]
 async fn get_list_types() -> Vec<List> {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     let list_types = sqlx::query_as::<_, List>("SELECT * FROM tbl_list")
         .fetch_all(&conn)
         .await
@@ -291,7 +338,7 @@ async fn get_list_types() -> Vec<List> {
 
 #[tauri::command]
 async fn get_list_type(id: i32) -> List {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     let list_type = sqlx::query_as::<_, List>("SELECT * FROM tbl_list WHERE id = ?")
         .bind(id)
         .fetch_one(&conn)
@@ -301,8 +348,14 @@ async fn get_list_type(id: i32) -> List {
 }
 
 #[tauri::command]
-async fn add_list_type(name: String, user_id: i32, is_joint: bool, list_money: String, list_password: String) {
-    let conn = get_db_connection().await;
+async fn add_list_type(
+    name: String,
+    user_id: i32,
+    is_joint: bool,
+    list_money: String,
+    list_password: String,
+) {
+    let conn = get_db_connection().await.unwrap();
     sqlx::query("INSERT INTO tbl_list (name, user_id, is_joint, last_modified, list_money, list_password) VALUES (?, ?, ?, ?, ?, ?)")
         .bind(name)
         .bind(user_id)
@@ -318,7 +371,7 @@ async fn add_list_type(name: String, user_id: i32, is_joint: bool, list_money: S
 #[tauri::command]
 async fn update_list_money(id: i32, list_money: String) {
     println!("List Money: {}", &list_money);
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     sqlx::query("UPDATE tbl_list SET list_money = ? WHERE id = ?")
         .bind(list_money.parse::<f32>().unwrap())
         .bind(id)
@@ -329,7 +382,7 @@ async fn update_list_money(id: i32, list_money: String) {
 
 #[tauri::command]
 async fn delete_list_type(id: i32) {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     sqlx::query("DELETE FROM tbl_list WHERE id = ?")
         .bind(id)
         .execute(&conn)
@@ -345,7 +398,7 @@ async fn delete_list_type(id: i32) {
 
 #[tauri::command]
 async fn get_userfiltered_items(user_id: i32, list_type: i32, is_all_items: bool) -> Vec<Item> {
-    let conn = get_db_connection().await;
+    let conn = get_db_connection().await.unwrap();
     if is_all_items && user_id != 0 {
         let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE user_id = ?")
             .bind(user_id)
@@ -353,38 +406,36 @@ async fn get_userfiltered_items(user_id: i32, list_type: i32, is_all_items: bool
             .await
             .unwrap();
         return items;
-    }
-    else if is_all_items && user_id == 0 {
+    } else if is_all_items && user_id == 0 {
         let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items")
             .fetch_all(&conn)
             .await
             .unwrap();
         return items;
-    }
-    else if user_id == 0 {
+    } else if user_id == 0 {
         let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ?")
             .bind(list_type)
             .fetch_all(&conn)
             .await
             .unwrap();
         return items;
-    }
-    else {
-        let items = sqlx::query_as::<_, Item>("SELECT * FROM tbl_items WHERE list_type = ? AND user_id = ?")
-            .bind(list_type)
-            .bind(user_id)
-            .fetch_all(&conn)
-            .await
-            .unwrap();
+    } else {
+        let items = sqlx::query_as::<_, Item>(
+            "SELECT * FROM tbl_items WHERE list_type = ? AND user_id = ?",
+        )
+        .bind(list_type)
+        .bind(user_id)
+        .fetch_all(&conn)
+        .await
+        .unwrap();
         return items;
     }
 }
 
-#[derive(Debug)]
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct AppConfig {
     db_name: String,
-    db_url: String
+    db_url: String,
 }
 
 #[tauri::command]
@@ -392,20 +443,37 @@ async fn update_app_config(db_url: String) {
     unsafe {
         let app_config = AppConfig {
             db_url: db_url.clone(),
-            db_name: DB_NAME.to_string()
+            db_name: "".into(),
         };
-        DATABASE_URL = db_url.clone();
         let app_config_json = serde_json::to_value(&app_config).unwrap();
-        let file = File::create(config_dir().expect("could not get config dir").join("ariculation/app_config.json")).unwrap();
+        let file = File::create(
+            config_dir()
+                .expect("could not get config dir")
+                .join("ariculation/app_config.json"),
+        )
+        .unwrap();
         let _ = serde_json::to_writer_pretty(file, &app_config_json);
         println!("appconfig: {:?}", app_config);
-        println!("appconfig location: {}", config_dir().expect("could not get config dir").join("ariculation/app_config.json").to_str().unwrap());
+        println!(
+            "appconfig location: {}",
+            config_dir()
+                .expect("could not get config dir")
+                .join("ariculation/app_config.json")
+                .to_str()
+                .unwrap()
+        );
     }
+    check_or_create_db().await;
 }
 
 #[tauri::command]
 async fn get_app_config() -> AppConfig {
-    let file = File::open(config_dir().expect("could not get config dir").join("ariculation/app_config.json")).unwrap();
+    let file = File::open(
+        config_dir()
+            .expect("could not get config dir")
+            .join("ariculation/app_config.json"),
+    )
+    .unwrap();
     let reader = BufReader::new(file);
     let app_config = serde_json::from_reader(reader).unwrap();
     return app_config;
