@@ -1,7 +1,12 @@
 # Ariculation
 
 Simple and easy to use finance management program.
+<br/>
 This program is in a very early stage and there could be a lot more to come.
+
+This program **won't** receive any support and **isn't** under active development.
+
+Made with <a href="https://tauri.app/">Tauri</a> 🚀
 
 ### Requirements
 - MySQL database server to connect to from the program
@@ -16,6 +21,8 @@ The program with automagically create the database and the needed tables needed 
 <img width="500px" src="https://github.com/RickyDane/Ariculation/assets/82893522/0e2a6f77-5443-4d1b-9d62-3cd144fb61e3" />
 <br/>
 (Settings)
+<br/>
+You need to put in a valid databaseurl that looks like this: exampleuser:thisismypassword123!@1.2.3.4/my_database_name
 <br/>
 
 <img width="500px" src="https://github.com/RickyDane/Ariculation/assets/82893522/e9ef8c32-1f6d-4b06-802d-caf29afb6cfa"/>
