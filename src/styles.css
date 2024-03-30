@@ -216,6 +216,7 @@ body {
 	border-bottom: 1px solid #3b3b3b;
 	position: sticky;
 	top: 0;
+	z-index: 10;
 }
 .list-type-container {
 	display: flex;
@@ -536,6 +537,16 @@ body {
 		transform: rotate(360deg);
 	}
 }
+.pending-loader-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
+	background-color: rgba(0, 0, 0, 0.25);
+	z-index: 11;
+}
 .pending-loader {
 	position: absolute;
 	top: 0;
@@ -548,6 +559,7 @@ body {
 	border-radius: 50%;
 	border: 3px solid #1f2124;
 	border-top: 3px solid #555;
-	animation: spin 1s cubic-bezier(0.5, -1, 0.5, 2) infinite;
+	/* animation: spin 1s cubic-bezier(0.5, -1, 0.5, 2) infinite; */
+	animation: spin 1s linear infinite;
 	z-index: 50;
 }

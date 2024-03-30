@@ -34,7 +34,8 @@ fn main() {
             get_list_type,
             get_userfiltered_items,
             update_app_config,
-            get_app_config
+            get_app_config,
+            update_user_last_list_type
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -57,6 +58,7 @@ struct User {
     id: i32,
     name: String,
     start_money: f32,
+    last_list_id: i32,
     ref_id: String,
     last_modified: String,
 }
@@ -137,7 +139,7 @@ async fn check_or_create_db() {
                 .execute(&conn)
                 .await
                 .unwrap_or_default();
-            sqlx::query("CREATE TABLE tbl_user (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), start_money FLOAT, ref_id varchar(255), last_modified VARCHAR(255), PRIMARY KEY (id))")
+            sqlx::query("CREATE TABLE tbl_user (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), start_money FLOAT, ref_id varchar(255), last_list_id INT, last_modified VARCHAR(255), PRIMARY KEY (id))")
                 .execute(&conn)
                 .await
                 .unwrap_or_default();
@@ -167,10 +169,10 @@ async fn add_item(
     category: String,
     is_split: bool,
     is_joint: bool,
-    user_id: u32,
+    user_id: i32,
     is_visible_on_user: bool,
-    list_type: u32,
-    visible_on_user_list: u32,
+    list_type: i32,
+    visible_on_user_list: i32,
 ) {
     let conn = get_db_connection().await.unwrap();
     sqlx::query("INSERT INTO tbl_items (name, category, description, price, is_split, is_joint, user_id, last_modified, is_visible_on_user, list_type, visible_on_user_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -300,6 +302,17 @@ async fn update_user(user_id: i32, name: String, start_money: String) {
         .bind(name)
         .bind(start_money.parse::<f32>().unwrap())
         .bind(Local::now().to_string())
+        .bind(user_id)
+        .execute(&conn)
+        .await
+        .unwrap();
+}
+
+#[tauri::command]
+async fn update_user_last_list_type(user_id: i32, list_type: i32) {
+    let conn = get_db_connection().await.unwrap();
+    sqlx::query("UPDATE tbl_user SET last_list_id = ? WHERE id = ?")
+        .bind(list_type)
         .bind(user_id)
         .execute(&conn)
         .await

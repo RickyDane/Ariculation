@@ -40,6 +40,7 @@ function App() {
 	const [showAskPasswordInput, setShowAskPasswordInput] = useState("none");
 	const [typedInPassword, setTypedInPassword] = useState("");
 	const [listToCheck, setListToCheck] = useState({});
+	const [lastJointListType, setLastJointListType] = useState(0);
 
 	const getUsers = async () => {
 		await invoke("get_users").then((users) => setUsers(users));
@@ -68,59 +69,81 @@ function App() {
 	}, []);
 
 	const setCurrentListMoney = async () => {
-		setIsPending(true);
-		if (currentListType != 0) {
+		if (currentListType != 0 && currentListType != null) {
 			await invoke("get_list_type", { id: parseInt(currentListType) }).then(
 				(listType) =>
 					setCurrentMoney(parseFloat(listType.list_money).toFixed(2).toString())
 			);
 		}
-		setIsPending(false);
 	};
 
-	useEffect(() => {
+	const loadSite = async (listType = currentListType) => {
 		setIsPending(true);
 		switch (currentView) {
 			case "all":
-				invoke("get_all_items", { listType: parseInt(currentListType) }).then(
-					(items) => {
-						setItems(
-							items.filter(
-								(item) =>
-									item.list_type !=
-									listTypes.find((list) => list.list_password != "")?.id
-							)
-						);
-						console.log(
-							items.filter(
-								(item) =>
-									item.list_type !=
-									listTypes.find((list) => list.list_password != "")?.id
-							)
-						);
-					}
-				);
+				await invoke("get_all_items", {
+					listType: parseInt(currentListType),
+				}).then((items) => {
+					setItems(
+						items.filter(
+							(item) =>
+								item.list_type !=
+								listTypes.find((list) => list.list_password != "")?.id
+						)
+					);
+				});
 				break;
 			case "user":
-				invoke("get_user_items", {
+				await invoke("get_user_items", {
 					userId: activeUserId,
-					listType: parseInt(currentListType),
+					listType: parseInt(listType),
 				}).then((items) => setItems(items));
 				break;
 			case "joint":
-				invoke("get_items", {
+				await invoke("get_items", {
 					isSplit: true,
 					isJoint: true,
-					listType: parseInt(currentListType),
+					listType: parseInt(listType),
 				}).then((items) => setItems(items));
 				break;
 			default:
 				console.log("Invalid view: ", currentView);
 				break;
 		}
-		setCurrentListMoney();
+		await setCurrentListMoney();
 		setIsPending(false);
-	}, [listTypes, currentListType, currentView]);
+	};
+
+	useEffect(() => {
+		if (currentView == "joint") {
+			// loadSite(lastJointListType);
+			setCurrentListType(lastJointListType);
+		} else {
+			// loadSite(users.find((user) => user.id == activeUserId)?.last_list_id);
+			setCurrentListType(
+				users.find((user) => user.id == activeUserId)?.last_list_id
+			);
+		}
+	}, [listTypes, currentView]);
+
+	useEffect(() => {
+		loadSite(currentListType);
+	}, [currentListType]);
+
+	let saveLastListId = async (listType) => {
+		await invoke("update_user_last_list_type", {
+			userId: activeUserId,
+			listType: parseInt(listType),
+		});
+		setUsers(
+			users.map((user) =>
+				user.id == activeUserId ? { ...user, last_list_id: listType } : user
+			)
+		);
+		if (currentView == "joint") {
+			setLastJointListType(listType);
+		}
+	};
 
 	useEffect(() => {
 		document.querySelector(".newlist-name-input").focus();
@@ -177,32 +200,26 @@ function App() {
 	};
 
 	const showAllItems = async () => {
-		setIsPending(true);
 		await updateCurrentView("Ariculation - All Items", "all", { id: 0 });
 		setIsAllItemsActive(true);
 		document
 			.querySelector(".allItems-button")
 			.classList.add("site-nav-link-active");
-		setIsPending(false);
 	};
 
 	const showJoint = async () => {
-		setIsPending(true);
 		await updateCurrentView("Ariculation - Joint", "joint", { id: 0 });
 		setIsJointActive(true);
 		document
 			.querySelector(".joint-button")
 			.classList.add("site-nav-link-active");
-		setIsPending(false);
 	};
 
 	const showUser = async (user) => {
-		setIsPending(true);
 		await updateCurrentView("Ariculation - " + user.name, "user", user);
 		document
 			.querySelector(".user-button-" + user.id)
 			.classList.add("site-nav-link-active");
-		setIsPending(false);
 	};
 
 	const deleteItem = async (id) => {
@@ -280,7 +297,7 @@ function App() {
 	};
 
 	const handleChangeListType = async (e) => {
-		console.log(e.target.value);
+		setIsPending(true);
 		if (
 			listTypes.find((list) => list.id == parseInt(e.target.value))
 				.list_password.length > 0
@@ -291,8 +308,8 @@ function App() {
 			setShowAskPasswordInput("flex");
 			return;
 		}
-		setIsPending(true);
 		setCurrentListType(parseInt(e.target.value));
+		await saveLastListId(parseInt(e.target.value));
 		setIsPending(false);
 	};
 
@@ -308,13 +325,6 @@ function App() {
 			isAllItems: isAllItemsActive,
 		}).then((items) => {
 			setItems(
-				items.filter(
-					(item) =>
-						item.list_type !=
-						listTypes.find((list) => list.list_password != "")?.id
-				)
-			);
-			console.log(
 				items.filter(
 					(item) =>
 						item.list_type !=
@@ -385,9 +395,14 @@ function App() {
 				</div>
 				<div className="main-container">
 					<div
-						className="pending-loader"
+						className="pending-loader-container"
 						style={{ display: isPending == true ? "block" : "none" }}
-					></div>
+					>
+						<div
+							className="pending-loader"
+							style={{ display: isPending == true ? "block" : "none" }}
+						></div>
+					</div>
 					<div className="toolbar">
 						<input
 							type="search"
