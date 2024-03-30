@@ -17,12 +17,14 @@ The program with automagically create the database and the needed tables needed 
 <br/>
 (Standard view)
 <br/>
+<br/>
 
 <img width="500px" src="https://github.com/RickyDane/Ariculation/assets/82893522/0e2a6f77-5443-4d1b-9d62-3cd144fb61e3" />
 <br/>
 (Settings)
 <br/>
 You need to put in a valid databaseurl that looks like this: exampleuser:thisismypassword123!@1.2.3.4/my_database_name
+<br/>
 <br/>
 
 <img width="500px" src="https://github.com/RickyDane/Ariculation/assets/82893522/e9ef8c32-1f6d-4b06-802d-caf29afb6cfa"/>
@@ -32,10 +34,12 @@ You need to put in a valid databaseurl that looks like this: exampleuser:thisism
 <br/>
 (Create new list)
 <br/>
+<br/>
 
 <img width="500px" src="https://github.com/RickyDane/Ariculation/assets/82893522/8c83675f-cd3e-44e4-a808-7fbffac26732"/>
 <br/>
 (Create new item)
+<br/>
 <br/>
 
 <img width="500px" src="https://github.com/RickyDane/Ariculation/assets/82893522/39e8b0a9-5324-4011-9236-8b0c6441bf69"/>
