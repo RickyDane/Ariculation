@@ -47,13 +47,15 @@ body {
 	display: flex;
 	flex-flow: column;
 	align-items: flex-start;
-	padding: 20px 0;
+	padding: 20px 10px;
 	gap: 5px;
+	width: 100%;
 }
 .site-nav-link {
 	display: flex;
 	align-items: center;
 	gap: 20px;
+	width: 100%;
 	border: none;
 	background-color: transparent;
 	text-align: center;
@@ -62,7 +64,7 @@ body {
 	font-size: 1.35em;
 	font-weight: 300;
 	padding: 7.5px 25px 7.5px 7.5px;
-	border-radius: 15px;
+	border-radius: 10px;
 	cursor: pointer;
 	transition: background-color 0.1s;
 }
@@ -81,7 +83,7 @@ body {
 	font-size: 1.35em;
 	font-weight: 300;
 	padding: 7.5px 25px 7.5px 7.5px;
-	border-radius: 15px;
+	border-radius: 10px;
 	cursor: pointer;
 	transition: background-color 0.1s;
 }

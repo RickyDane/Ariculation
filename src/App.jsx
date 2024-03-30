@@ -82,7 +82,7 @@ function App() {
 		switch (currentView) {
 			case "all":
 				await invoke("get_all_items", {
-					listType: parseInt(currentListType),
+					listType: parseInt(listType),
 				}).then((items) => {
 					setItems(
 						items.filter(
@@ -116,10 +116,8 @@ function App() {
 
 	useEffect(() => {
 		if (currentView == "joint") {
-			// loadSite(lastJointListType);
 			setCurrentListType(lastJointListType);
 		} else {
-			// loadSite(users.find((user) => user.id == activeUserId)?.last_list_id);
 			setCurrentListType(
 				users.find((user) => user.id == activeUserId)?.last_list_id
 			);
@@ -179,13 +177,6 @@ function App() {
 	const refreshListTypes = async (userId = null) => {
 		await invoke("get_list_types").then((types) => {
 			if (types.length > 0) {
-				if (userId != null && userId != 0) {
-					setCurrentListType(
-						types.find((list) => list.user_id == parseInt(userId)).id
-					);
-				} else {
-					setCurrentListType(types[0].id);
-				}
 				setListTypes(types);
 			}
 		});
@@ -195,8 +186,8 @@ function App() {
 		await unselectAllNavLinks();
 		await refreshListTypes(user.id);
 		appWindow.setTitle(windowTitle);
-		setCurrentView(currentView);
 		setActiveUserId(user.id);
+		setCurrentView(currentView);
 	};
 
 	const showAllItems = async () => {
@@ -320,7 +311,7 @@ function App() {
 	useEffect(() => {
 		setIsPending(true);
 		invoke("get_userfiltered_items", {
-			listType: parseInt(currentListType),
+			listType: parseInt(currentListType) > 0 ? parseInt(currentListType) : 0,
 			userId: parseInt(currentUserFilter),
 			isAllItems: isAllItemsActive,
 		}).then((items) => {
@@ -382,6 +373,9 @@ function App() {
 						))}
 					</div>
 					<div className="site-nav-settings-bar">
+						<button className="site-nav-settings-button">
+							<i className="fa-solid fa-mobile-screen-button"></i>
+						</button>
 						<button
 							className="add-user-button"
 							onClick={() => setShowAddUserPopup(true)}
@@ -546,12 +540,6 @@ function App() {
 								onKeyUp={updateListMoney}
 							/>
 						</div>
-						{/* {isJointActive ? (
-            <button className="remove-joint-entries" onClick={() => openQuestionPopup({}, "Are you sure you want to remove all joint entries?", () => clearJointItems())}>
-              <i className="fa-solid fa-xmark"></i>
-              Remove entries
-            </button>
-            ) : ""} */}
 						<div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
 							<div
 								style={{ display: "flex", gap: "10px", alignItems: "center" }}

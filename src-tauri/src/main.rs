@@ -267,15 +267,16 @@ async fn get_users() -> Vec<User> {
 }
 
 #[tauri::command]
-async fn add_user(name: String, start_money: String, ref_id: String) {
+async fn add_user(name: String, start_money: String, ref_id: String, last_list_id: i32) {
     let conn = get_db_connection().await.unwrap();
     sqlx::query(
-        "INSERT INTO tbl_user (name, start_money, last_modified, ref_id) VALUES (?, ?, ?, ?)",
+        "INSERT INTO tbl_user (name, start_money, last_modified, ref_id, last_list_id) VALUES (?, ?, ?, ?, ?)",
     )
     .bind(name)
     .bind(start_money.parse::<f32>().unwrap())
     .bind(Local::now().to_string())
     .bind(ref_id)
+    .bind(last_list_id)
     .execute(&conn)
     .await
     .unwrap();
