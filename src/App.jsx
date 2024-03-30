@@ -373,9 +373,9 @@ function App() {
 						))}
 					</div>
 					<div className="site-nav-settings-bar">
-						<button className="site-nav-settings-button">
+						{/* <button className="site-nav-settings-button">
 							<i className="fa-solid fa-mobile-screen-button"></i>
-						</button>
+						</button> */}
 						<button
 							className="add-user-button"
 							onClick={() => setShowAddUserPopup(true)}
