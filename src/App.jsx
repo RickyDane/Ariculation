@@ -11,6 +11,7 @@ import QuestionPopup from "./QuestionPopup";
 import NewListInput from "./NewListInput";
 import SettingsPopup from "./SettingsPopup";
 import AskPasswordInput from "./AskPasswordInput.jsx";
+import ShoppingListPopup from "./ShoppingListPopup.jsx";
 
 let IsAppFirstRun = true;
 
@@ -20,6 +21,7 @@ function App() {
 	const [showEditItemPopup, setShowEditItemPopup] = useState("none");
 	const [showAddUserPopup, setShowAddUserPopup] = useState("none");
 	const [showTooltipInput, setShowTooltipInput] = useState("none");
+	const [showShoppingListPopup, setShowShoppingListPopup] = useState("none");
 	const [editItem, setEditItem] = useState({});
 	const [isAllItemsActive, setIsAllItemsActive] = useState(true);
 	const [isJointActive, setIsJointActive] = useState(false);
@@ -373,9 +375,12 @@ function App() {
 						))}
 					</div>
 					<div className="site-nav-settings-bar">
-						{/* <button className="site-nav-settings-button">
+						<button
+							className="site-nav-settings-button"
+							onClick={() => setShowShoppingListPopup("flex")}
+						>
 							<i className="fa-solid fa-mobile-screen-button"></i>
-						</button> */}
+						</button>
 						<button
 							className="add-user-button"
 							onClick={() => setShowAddUserPopup(true)}
@@ -683,6 +688,10 @@ function App() {
 				password={typedInPassword}
 				setPassword={setTypedInPassword}
 				handlePasswordInput={handlePasswordInput}
+			/>
+			<ShoppingListPopup
+				setShow={setShowShoppingListPopup}
+				show={showShoppingListPopup}
 			/>
 		</>
 	);

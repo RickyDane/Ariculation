@@ -35,7 +35,8 @@ fn main() {
             get_userfiltered_items,
             update_app_config,
             get_app_config,
-            update_user_last_list_type
+            update_user_last_list_type,
+            add_shopping_list_item
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -444,6 +445,17 @@ async fn get_userfiltered_items(user_id: i32, list_type: i32, is_all_items: bool
         .unwrap();
         return items;
     }
+}
+
+#[tauri::command]
+async fn add_shopping_list_item(item_name: String) {
+    let conn = get_db_connection().await.unwrap();
+    sqlx::query("INSERT INTO tbl_shopping_list (itemname) VALUES (?)")
+        .bind(&item_name)
+        .execute(&conn)
+        .await
+        .unwrap();
+    println!("Added Shopping List Item: {}", item_name);
 }
 
 #[derive(Debug, Deserialize, Serialize)]

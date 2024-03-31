@@ -361,6 +361,8 @@ body {
 	font-weight: 300;
 	color: white;
 	padding-bottom: 10px;
+	display: flex;
+	width: 100%;
 }
 .add-item-popup-divider {
 	width: 25%;
@@ -529,6 +531,26 @@ body {
 	margin: auto;
 	background-color: #2e2e2e;
 	z-index: 100;
+}
+
+.add-item-popup-item {
+	width: 100%;
+	color: rgb(185, 185, 185);
+	display: flex;
+	justify-content: space-between;
+	border-radius: 5px;
+	padding: 5px 5px 5px 10px;
+}
+.add-item-popup-item:hover {
+	background-color: #2e2e2e;
+	color: white;
+}
+.add-item-popup-item-delete {
+	color: gray;
+	transition: 0.3s ease;
+}
+.add-item-popup-item-delete:hover {
+	color: red;
 }
 
 @keyframes spin {
