@@ -46,8 +46,6 @@ function SettingsPopup(props) {
 			<div className="add-item-popup" style={{ display: props.show }}>
 				<div className="add-item-popup-body">
 					<h1 className="add-item-popup-title">Settings</h1>
-					<hr />
-					<br />
 					<div
 						className="add-item-popup-upper-body"
 						style={{ flexFlow: "column", gap: "20px" }}

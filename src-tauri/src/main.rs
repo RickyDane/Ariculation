@@ -35,7 +35,10 @@ fn main() {
             get_userfiltered_items,
             update_app_config,
             get_app_config,
-            update_user_last_list_type
+            update_user_last_list_type,
+            add_shopping_list_item,
+            get_shopping_list_items,
+            delete_shopping_list_item
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -147,6 +150,11 @@ async fn check_or_create_db() {
                 .execute(&conn)
                 .await
                 .unwrap_or_default();
+            sqlx::query("CREATE TABLE tbl_shopping_list (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), price FLOAT, is_keep_item BOOLEAN, is_active BOOLEAN, PRIMARY KEY (id))")
+                .execute(&conn)
+                .await
+                .unwrap_or_default();
+            println!("Database created successfully");
         }
     }
 }
@@ -227,10 +235,11 @@ async fn update_item(
     is_split: bool,
     user_id: i32,
     is_visible_on_user: bool,
+    visible_on_user_list: i32,
     list_type: i32,
 ) {
     let conn = get_db_connection().await.unwrap();
-    sqlx::query("UPDATE tbl_items SET name = ?, category = ?, description = ?, price = ?, is_split = ?, last_modified = ?, is_visible_on_user = ?, user_id = ?, list_type = ? WHERE id = ?")
+    sqlx::query("UPDATE tbl_items SET name = ?, category = ?, description = ?, price = ?, is_split = ?, last_modified = ?, is_visible_on_user = ?, visible_on_user_list = ?, user_id = ?, list_type = ? WHERE id = ?")
         .bind(name)
         .bind(category)
         .bind(description)
@@ -238,6 +247,7 @@ async fn update_item(
         .bind(is_split)
         .bind(Local::now().to_string())
         .bind(is_visible_on_user)
+        .bind(visible_on_user_list)
         .bind(user_id)
         .bind(list_type)
         .bind(id)
@@ -444,6 +454,47 @@ async fn get_userfiltered_items(user_id: i32, list_type: i32, is_all_items: bool
         .unwrap();
         return items;
     }
+}
+
+#[tauri::command]
+async fn add_shopping_list_item(name: String, price: f32) {
+    let conn = get_db_connection().await.unwrap();
+    sqlx::query("INSERT INTO tbl_shopping_list (name, price) VALUES (?, ?)")
+        .bind(&name)
+        .bind(price)
+        .execute(&conn)
+        .await
+        .unwrap();
+    println!("Added Shopping List Item: {}", name);
+}
+
+#[derive(sqlx::FromRow, serde::Serialize, serde::Deserialize, Debug)]
+struct ShoppingListItem {
+    id: Option<i32>,
+    name: Option<String>,
+    price: Option<f32>,
+    is_keep_item: Option<bool>,
+    is_active: Option<bool>,
+}
+
+#[tauri::command]
+async fn get_shopping_list_items() -> Vec<ShoppingListItem> {
+    let conn = get_db_connection().await.unwrap();
+    let items = sqlx::query_as::<_, ShoppingListItem>("SELECT * FROM tbl_shopping_list")
+        .fetch_all(&conn)
+        .await
+        .unwrap();
+    return items;
+}
+
+#[tauri::command]
+async fn delete_shopping_list_item(id: i32) {
+    let conn = get_db_connection().await.unwrap();
+    sqlx::query("DELETE FROM tbl_shopping_list WHERE id = ?")
+        .bind(id)
+        .execute(&conn)
+        .await
+        .unwrap();
 }
 
 #[derive(Debug, Deserialize, Serialize)]

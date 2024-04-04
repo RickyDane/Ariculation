@@ -263,7 +263,8 @@ body {
 }
 .search-input {
 	height: 35px;
-	padding-left: 5px;
+	padding-left: 15px;
+	background-color: #333;
 }
 .item-list {
 	width: 100%;
@@ -308,7 +309,7 @@ body {
 	background-color: #2e2e2e !important;
 	border-radius: 5px;
 	overflow: hidden;
-	width: 100px;
+	width: 70px;
 	margin: 0 auto;
 }
 .item-action-button {
@@ -361,6 +362,8 @@ body {
 	font-weight: 300;
 	color: white;
 	padding-bottom: 10px;
+	display: flex;
+	width: 100%;
 }
 .add-item-popup-divider {
 	width: 25%;
@@ -481,13 +484,21 @@ body {
 	display: flex;
 	flex-flow: column;
 	align-items: flex-start;
-	gap: 5px;
+	gap: 10px;
 }
 .add-item-popup-checkbox {
-	background-color: #2e2e2e;
-	width: 24px;
-	height: 24px;
+	background-color: white;
+	width: 18px;
+	height: 18px;
 	cursor: pointer;
+	border-radius: 5px;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+}
+.add-item-popup-checkbox:checked {
+	background-color: #444;
+	box-shadow: inset 0px 0px 3px 3px white;
 }
 .add-item-popup-checkbox-label {
 	color: white;
@@ -529,6 +540,26 @@ body {
 	margin: auto;
 	background-color: #2e2e2e;
 	z-index: 100;
+}
+
+.add-item-popup-item {
+	width: 100%;
+	color: rgb(185, 185, 185);
+	display: flex;
+	justify-content: space-between;
+	border-radius: 5px;
+	padding: 5px 5px 5px 10px;
+}
+.add-item-popup-item:hover {
+	background-color: #2e2e2e;
+	color: white;
+}
+.add-item-popup-item-delete {
+	color: gray;
+	transition: 0.3s ease;
+}
+.add-item-popup-item-delete:hover {
+	color: red;
 }
 
 @keyframes spin {

@@ -11,6 +11,7 @@ import QuestionPopup from "./QuestionPopup";
 import NewListInput from "./NewListInput";
 import SettingsPopup from "./SettingsPopup";
 import AskPasswordInput from "./AskPasswordInput.jsx";
+import ShoppingListPopup from "./ShoppingListPopup.jsx";
 
 let IsAppFirstRun = true;
 
@@ -20,8 +21,9 @@ function App() {
 	const [showEditItemPopup, setShowEditItemPopup] = useState("none");
 	const [showAddUserPopup, setShowAddUserPopup] = useState("none");
 	const [showTooltipInput, setShowTooltipInput] = useState("none");
+	const [showShoppingListPopup, setShowShoppingListPopup] = useState("none");
 	const [editItem, setEditItem] = useState({});
-	const [isAllItemsActive, setIsAllItemsActive] = useState(true);
+	const [isAllItemsActive, setIsAllItemsActive] = useState(false);
 	const [isJointActive, setIsJointActive] = useState(false);
 	const [users, setUsers] = useState([]);
 	const [activeUserId, setActiveUserId] = useState(0);
@@ -68,9 +70,9 @@ function App() {
 		}
 	}, []);
 
-	const setCurrentListMoney = async () => {
-		if (currentListType != 0 && currentListType != null) {
-			await invoke("get_list_type", { id: parseInt(currentListType) }).then(
+	const setCurrentListMoney = async (listType) => {
+		if (listType != 0 && listType != null) {
+			await invoke("get_list_type", { id: parseInt(listType) }).then(
 				(listType) =>
 					setCurrentMoney(parseFloat(listType.list_money).toFixed(2).toString())
 			);
@@ -81,9 +83,7 @@ function App() {
 		setIsPending(true);
 		switch (currentView) {
 			case "all":
-				await invoke("get_all_items", {
-					listType: parseInt(listType),
-				}).then((items) => {
+				await invoke("get_all_items").then((items) => {
 					setItems(
 						items.filter(
 							(item) =>
@@ -110,13 +110,17 @@ function App() {
 				console.log("Invalid view: ", currentView);
 				break;
 		}
-		await setCurrentListMoney();
+		await setCurrentListMoney(listType);
 		setIsPending(false);
 	};
 
 	useEffect(() => {
 		if (currentView == "joint") {
 			setCurrentListType(lastJointListType);
+		} else if (currentView == "") {
+			setCurrentListType(0);
+		} else if (currentView == "all") {
+			setCurrentListType(0);
 		} else {
 			setCurrentListType(
 				users.find((user) => user.id == activeUserId)?.last_list_id
@@ -126,7 +130,7 @@ function App() {
 
 	useEffect(() => {
 		loadSite(currentListType);
-	}, [currentListType]);
+	}, [currentListType, currentView]);
 
 	let saveLastListId = async (listType) => {
 		await invoke("update_user_last_list_type", {
@@ -373,9 +377,12 @@ function App() {
 						))}
 					</div>
 					<div className="site-nav-settings-bar">
-						{/* <button className="site-nav-settings-button">
+						<button
+							className="site-nav-settings-button"
+							onClick={() => setShowShoppingListPopup("flex")}
+						>
 							<i className="fa-solid fa-mobile-screen-button"></i>
-						</button> */}
+						</button>
 						<button
 							className="add-user-button"
 							onClick={() => setShowAddUserPopup(true)}
@@ -399,13 +406,15 @@ function App() {
 					</div>
 					<div className="toolbar">
 						<input
-							type="search"
+							type="text"
 							results={"5"}
 							name="s"
 							className="text-input search-input"
 							placeholder="Search ..."
-							onChange={async (e) => {
-								handleSearchInput(e);
+							onKeyUp={async (e) => {
+								if (e.key === "Enter") {
+									handleSearchInput(e);
+								}
 							}}
 						/>
 						<div style={{ display: "flex", gap: "5px" }}>
@@ -628,7 +637,6 @@ function App() {
 			<EditItemPopup
 				setItems={setItems}
 				items={items}
-				item={editItem}
 				setShow={setShowEditItemPopup}
 				show={showEditItemPopup}
 				isJoint={isJointActive}
@@ -636,6 +644,8 @@ function App() {
 				activeUserId={activeUserId}
 				currentView={currentView}
 				currentListType={currentListType}
+				listTypes={listTypes}
+				item={editItem}
 			/>
 			<AddUserPopup
 				users={users}
@@ -683,6 +693,10 @@ function App() {
 				password={typedInPassword}
 				setPassword={setTypedInPassword}
 				handlePasswordInput={handlePasswordInput}
+			/>
+			<ShoppingListPopup
+				setShow={setShowShoppingListPopup}
+				show={showShoppingListPopup}
 			/>
 		</>
 	);
