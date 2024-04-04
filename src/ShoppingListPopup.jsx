@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ShoppingListPopup(props) {
 	const [chosenListType, setChosenListType] = useState(1);
@@ -7,22 +7,38 @@ export default function ShoppingListPopup(props) {
 	const [newItemName, setNewItemName] = useState("");
 	const [isPending, setIsPending] = useState(false);
 	const loadShoppingListItems = async () => {
-		await invoke("get_shopping_list_items", {
-			listType: chosenListType,
-		}).then((items) => {
+		setIsPending(true);
+		await invoke("get_shopping_list_items").then((items) => {
 			setShoppingListItems(items);
 		});
-	};
-	const addShoppingListItems = async (item) => {
-		setIsPending(true);
-		await invoke("add_shopping_list_item", {
-			// listType: chosenListType,
-			itemName: item.name,
-			// itemprice: item.price,
-		});
-		setShoppingListItems([...shoppingListItems, item]);
 		setIsPending(false);
 	};
+
+	const addShoppingListItems = async (item) => {
+		setIsPending(true);
+		try {
+			await invoke("add_shopping_list_item", {
+				name: item.name,
+				price: 0.0,
+			});
+		} catch {}
+		await loadShoppingListItems();
+		setIsPending(false);
+	};
+
+	useEffect(() => {
+		loadShoppingListItems();
+	}, [props.show]);
+
+	const deleteShoppingListItems = async (item) => {
+		setIsPending(true);
+		await invoke("delete_shopping_list_item", {
+			id: item.id,
+		});
+		setShoppingListItems(shoppingListItems.filter((i) => i.id != item.id));
+		setIsPending(false);
+	};
+
 	return (
 		<div
 			className="add-item-popup"
@@ -111,9 +127,7 @@ export default function ShoppingListPopup(props) {
 										cursor: "pointer",
 									}}
 									onClick={() => {
-										const newItems = [...shoppingListItems];
-										newItems.splice(idx, 1);
-										setShoppingListItems(newItems);
+										deleteShoppingListItems(item);
 									}}
 								>
 									<i className="fa-solid fa-trash"></i>
