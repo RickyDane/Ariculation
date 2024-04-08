@@ -1,0 +1,19 @@
+{
+	"sqltools.connections": [
+		{
+			"mysqlOptions": {
+				"authProtocol": "default",
+				"enableSsl": "Disabled",
+				"ssl": {}
+			},
+			"previewLimit": 50,
+			"server": "danehub.com",
+			"port": 6603,
+			"driver": "MySQL",
+			"name": "rippi-remote",
+			"database": "ariculation_prd",
+			"username": "root",
+			"askForPassword": true
+		}
+	]
+}
