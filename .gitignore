@@ -1,13 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules/*
+/node_modules
 /build
 /target
 /.cargo
-
-# testing
-/coverage
 
 # IDEs and editors
 /.idea
@@ -23,24 +20,3 @@
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
-# misc
-/.DS_Store
-/Thumbs.db
-
-# Tauri - https://github.com/tauri-apps/tauri
-# Config directory
-/tauri
-/src-tauri
-
-# Rust
-*.rs.bk
-
-# React
-.idea/jsLibs
-.idea/jsLibraryMappings
-.idea/workspace.xml
-.idea/inspectionProfiles/
-.idea/dictionaries/
-
-.vscode
