@@ -7,7 +7,7 @@ use std::{
     fs::{self, create_dir, File},
     io::BufReader,
 };
-use tauri::api::path::config_dir;
+use tauri::api::{ipc::SerializeOptions, path::config_dir};
 
 static mut DATABASE_URL: String = String::new();
 // const DB_NAME: &str = "ariculation_prd";
@@ -159,13 +159,64 @@ async fn check_or_create_db() {
     }
 }
 
+fn cert_file() -> String {
+    fs::read_to_string(config_dir().unwrap().join("ariculation/user1-cert.pem")).unwrap()
+}
+fn key_file() -> String {
+    fs::read_to_string(config_dir().unwrap().join("ariculation/user1-key.pem")).unwrap()
+}
+
 async fn get_db_connection() -> Result<MySqlPool, Error> {
     unsafe {
-        Ok(
-            MySqlPool::connect(format!("mysql://{}", DATABASE_URL).as_str())
-                .await
-                .expect("Could not connect to database"),
-        )
+        let user = DATABASE_URL.split(":").nth(0).unwrap();
+        let password = DATABASE_URL
+            .split(":")
+            .nth(1)
+            .unwrap()
+            .split("@")
+            .nth(0)
+            .unwrap();
+        let host = DATABASE_URL
+            .split("@")
+            .nth(1)
+            .unwrap()
+            .split(":")
+            .nth(0)
+            .unwrap()
+            .split("/")
+            .nth(0)
+            .unwrap();
+        let port = DATABASE_URL
+            .split("@")
+            .nth(1)
+            .unwrap()
+            .split(":")
+            .nth(1)
+            .unwrap()
+            .split("/")
+            .nth(0)
+            .unwrap();
+        let db_name = DATABASE_URL.split("/").last().unwrap();
+        println!("user: {}", user);
+        println!("password: {}", password);
+        println!("host: {}", host);
+        println!("port: {}", port);
+        println!("db_name: {}", db_name);
+        println!("cert: {:?}", cert_file());
+        println!("key: {:?}", key_file());
+        let options = sqlx::mysql::MySqlConnectOptions::new()
+            .ssl_mode(sqlx::mysql::MySqlSslMode::Required)
+            .ssl_ca_from_pem(vec![])
+            .ssl_client_cert_from_pem(cert_file().as_bytes())
+            .ssl_client_key_from_pem(key_file().as_bytes())
+            .username(user)
+            .password(password)
+            .host(host)
+            .port(port.parse::<u16>().unwrap())
+            .database(db_name);
+        Ok(MySqlPool::connect_with(options)
+            .await
+            .expect("Could not connect to database"))
     }
 }
 
