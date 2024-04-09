@@ -6,9 +6,10 @@ function SettingsPopup(props) {
 	const [lists, setLists] = useState(props.listTypes);
 	const [users, setUsers] = useState(props.users);
 	const [selectedList, setSelectedList] = useState(0);
+	const [isSettingsLoading, setIsSettingsLoading] = useState(false);
 
 	const loadState = async () => {
-		props.setIsPending(true);
+		setIsSettingsLoading(true);
 		if (
 			props.appConfig.db_url == "dbuser:dbpassword@dbserver:dbport" ||
 			props.appConfig.db_url == ""
@@ -30,7 +31,7 @@ function SettingsPopup(props) {
 			.catch((error) => {
 				alert(error + " Please check you database credentials");
 			});
-		props.setIsPending(false);
+		setIsSettingsLoading(false);
 	};
 
 	useEffect(() => {
@@ -44,14 +45,15 @@ function SettingsPopup(props) {
 	return (
 		<>
 			<div className="add-item-popup" style={{ display: props.show }}>
-				<div className="add-item-popup-body">
+				<div className="add-item-popup-body" style={{ position: "relative" }}>
 					<h1 className="add-item-popup-title">Settings</h1>
+					<br />
 					<div
 						className="add-item-popup-upper-body"
 						style={{ flexFlow: "column", gap: "20px" }}
 					>
 						<div>
-							<p style={{ color: "white" }}>User lists</p>
+							<p style={{ color: "white", marginBottom: "10px" }}>User lists</p>
 							<div className="list-type-container">
 								<select
 									style={{ width: "100%" }}
@@ -73,7 +75,7 @@ function SettingsPopup(props) {
 										gap: "10px",
 										alignItems: "center",
 										justifyContent: "center",
-										width: "50px",
+										width: "45px",
 										padding: "0 10px",
 									}}
 									onClick={async () => {
@@ -122,46 +124,80 @@ function SettingsPopup(props) {
 							</div>
 						</div>
 						<div style={{ width: "100%" }}>
-							<p style={{ color: "white" }}>Database Url</p>
-							<div style={{ display: "flex", flexFlow: "row" }}>
+							<h2
+								style={{
+									color: "white",
+									marginBottom: "10px",
+									fontWeight: "lighter",
+								}}
+							>
+								Database
+							</h2>
+							<hr />
+							<p className="text-normal" style={{ marginTop: "10px" }}>
+								User
+							</p>
+							<input
+								type="text"
+								className="text-input"
+								value={props.appConfig.db_user}
+							/>
+							<p className="text-normal" style={{ marginTop: "10px" }}>
+								Password
+							</p>
+							<input
+								type="password"
+								className="text-input"
+								value={props.appConfig.db_password}
+							/>
+							<p className="text-normal" style={{ marginTop: "10px" }}>
+								Host
+							</p>
+							<input
+								type="text"
+								className="text-input"
+								value={props.appConfig.db_host}
+							/>
+							<p className="text-normal" style={{ marginTop: "10px" }}>
+								Port
+							</p>
+							<input
+								type="text"
+								className="text-input"
+								value={props.appConfig.db_port}
+							/>
+							<p className="text-normal" style={{ marginTop: "10px" }}>
+								Database
+							</p>
+							<input
+								type="text"
+								className="text-input"
+								value={props.appConfig.db_name}
+							/>
+							<label
+								htmlFor="settings-is-ssl"
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: "10px",
+									cursor: "pointer",
+									marginTop: "10px",
+								}}
+							>
 								<input
-									type="text"
-									className="add-item-popup-input"
-									style={{ borderRadius: "5px 0px 0px 5px" }}
-									placeholder="dbuser:password@localhost:3306/dbname"
-									value={props.appConfig.db_url}
-									onChange={(e) =>
+									id="settings-is-ssl"
+									className="add-item-popup-checkbox"
+									type="checkbox"
+									checked={props.appConfig.is_use_ssl}
+									onChange={() =>
 										props.setAppConfig({
 											...props.appConfig,
-											db_url: e.target.value,
+											is_ssl: !props.appConfig.is_ssl,
 										})
 									}
 								/>
-								<button
-									className="add-list-button concat-button"
-									style={{
-										backgroundColor: "#333",
-										color: "white",
-										borderRadius: "0px 5px 5px 0px",
-										display: "flex",
-										gap: "10px",
-										alignItems: "center",
-										justifyContent: "center",
-										padding: "0 10px",
-										width: "50px",
-									}}
-									onClick={async () => {
-										props.setIsPending(true);
-										await invoke("update_app_config", {
-											dbUrl: props.appConfig.db_url,
-										});
-										props.runClear();
-										props.setIsPending(false);
-									}}
-								>
-									<i className="fa-solid fa-save"></i>
-								</button>
-							</div>
+								<p className="text-normal">Use SSL</p>
+							</label>
 						</div>
 					</div>
 					<br />
@@ -182,6 +218,12 @@ function SettingsPopup(props) {
 							</button>
 						</div>
 					</div>
+				</div>
+				<div
+					className="pending-loader-container"
+					style={{ display: isSettingsLoading == true ? "block" : "none" }}
+				>
+					<div className="pending-loader"></div>
 				</div>
 			</div>
 		</>

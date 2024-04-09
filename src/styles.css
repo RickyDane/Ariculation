@@ -488,8 +488,8 @@ body {
 }
 .add-item-popup-checkbox {
 	background-color: white;
-	width: 18px;
-	height: 18px;
+	width: 15px;
+	height: 15px;
 	cursor: pointer;
 	border-radius: 5px;
 	-webkit-appearance: none;
@@ -571,7 +571,7 @@ body {
 	}
 }
 .pending-loader-container {
-	position: fixed;
+	position: absolute;
 	top: 0;
 	left: 0;
 	right: 0;
@@ -595,4 +595,9 @@ body {
 	/* animation: spin 1s cubic-bezier(0.5, -1, 0.5, 2) infinite; */
 	animation: spin 1s linear infinite;
 	z-index: 50;
+}
+.text-normal {
+	font-weight: 300;
+	color: white;
+	margin: 5px 0;
 }
