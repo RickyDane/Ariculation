@@ -170,7 +170,9 @@ function AddItemPopup(props) {
 					</div>
 					<div className="add-item-popup-footer">
 						<div className="add-item-popup-checkbox-container">
-							<div style={{ display: "flex", alignItems: "center" }}>
+							<div
+								style={{ display: "flex", alignItems: "center", gap: "10px" }}
+							>
 								<input
 									id="split-checkbox"
 									type="checkbox"
@@ -200,6 +202,7 @@ function AddItemPopup(props) {
 										style={{
 											display: "flex",
 											alignItems: "center",
+											gap: "10px",
 										}}
 									>
 										<input

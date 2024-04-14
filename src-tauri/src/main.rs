@@ -7,10 +7,7 @@ use std::{
     fs::{self, create_dir, File},
     io::BufReader,
 };
-use tauri::api::{ipc::SerializeOptions, path::config_dir};
-
-static mut DATABASE_URL: String = String::new();
-// const DB_NAME: &str = "ariculation_prd";
+use tauri::api::path::config_dir;
 
 fn main() {
     tauri::Builder::default()
@@ -90,8 +87,12 @@ async fn check_or_create_db() {
         if fs::metadata(config_dir().unwrap().join("ariculation/app_config.json")).is_err() {
             let _ = File::create(config_dir().unwrap().join("ariculation/app_config.json"));
             let app_config_json = AppConfig {
+                db_host: "localhost".to_string(),
+                db_user: "root".to_string(),
                 db_name: "ariculation_prd".to_string(),
-                db_url: "dbuser:dbpassword@dbserver:dbport".to_string(),
+                db_password: "dbpassword".to_string(),
+                db_port: "3306".to_string(),
+                is_use_ssl: false,
             };
             let _ = serde_json::to_writer_pretty(
                 File::create(
@@ -106,37 +107,19 @@ async fn check_or_create_db() {
                 &app_config_json,
             );
         }
-        DATABASE_URL = get_app_config().await.db_url;
-        if DATABASE_URL != "dbuser:dbpassword@dbserver:dbport" && !DATABASE_URL.is_empty() {
-            let conn = MySqlPool::connect(
-                format!("mysql://{}", &DATABASE_URL.split("/").nth(0).unwrap()).as_str(),
-            )
-            .await
-            .expect("could not connect to db");
-            println!(
-                "\nSearching for database: {}",
-                &DATABASE_URL.split("/").last().unwrap()
-            );
-            println!("Database URL: {}", DATABASE_URL.split("/").nth(0).unwrap());
-            println!(
-                "Database name: {}\n",
-                DATABASE_URL.split("/").last().unwrap()
-            );
+        let app_config = get_app_config().await;
+        if app_config.db_name != String::from("dbname") && !app_config.db_name.is_empty() {
+            let conn = get_db_connection()
+                .await
+                .expect("Could not connect to database");
             // create db if not exists
             sqlx::query(
-                format!(
-                    "{} {}",
-                    "CREATE DATABASE IF NOT EXISTS",
-                    DATABASE_URL.split("/").last().unwrap()
-                )
-                .as_str(),
+                format!("{} {}", "CREATE DATABASE IF NOT EXISTS", app_config.db_name).as_str(),
             )
             .execute(&conn)
             .await
             .unwrap_or_default();
-            let conn = MySqlPool::connect(format!("mysql://{}", &DATABASE_URL).as_str())
-                .await
-                .unwrap();
+            let conn = get_db_connection().await.unwrap();
             // create tables if not exists
             sqlx::query("CREATE TABLE tbl_items (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), category VARCHAR(255), description TEXT, price FLOAT, is_split BOOLEAN, is_joint BOOLEAN, user_id INT, last_modified VARCHAR(255), is_visible_on_user BOOLEAN, visible_on_user_list BOOLEAN, list_type INT, PRIMARY KEY (id))")
                 .execute(&conn)
@@ -167,53 +150,37 @@ fn key_file() -> String {
 }
 
 async fn get_db_connection() -> Result<MySqlPool, Error> {
-    unsafe {
-        let user = DATABASE_URL.split(":").nth(0).unwrap();
-        let password = DATABASE_URL
-            .split(":")
-            .nth(1)
-            .unwrap()
-            .split("@")
-            .nth(0)
-            .unwrap();
-        let host = DATABASE_URL
-            .split("@")
-            .nth(1)
-            .unwrap()
-            .split(":")
-            .nth(0)
-            .unwrap()
-            .split("/")
-            .nth(0)
-            .unwrap();
-        let port = DATABASE_URL
-            .split("@")
-            .nth(1)
-            .unwrap()
-            .split(":")
-            .nth(1)
-            .unwrap()
-            .split("/")
-            .nth(0)
-            .unwrap();
-        let db_name = DATABASE_URL.split("/").last().unwrap();
-        println!("user: {}", user);
-        println!("password: {}", password);
-        println!("host: {}", host);
-        println!("port: {}", port);
-        println!("db_name: {}", db_name);
-        println!("cert: {:?}", cert_file());
-        println!("key: {:?}", key_file());
-        let options = sqlx::mysql::MySqlConnectOptions::new()
+    let app_config = get_app_config().await;
+    let user = app_config.db_user;
+    let password = app_config.db_password;
+    let host = app_config.db_host;
+    let port = app_config.db_port;
+    let db_name = app_config.db_name;
+    let is_use_ssl = app_config.is_use_ssl;
+
+    println!("user: {}", user);
+    println!("password: {}", password);
+    println!("host: {}", host);
+    println!("port: {}", port);
+    println!("db_name: {}", db_name);
+
+    let options = sqlx::mysql::MySqlConnectOptions::new()
+        .username(&user)
+        .password(&password)
+        .host(&host)
+        .port(port.parse::<u16>().unwrap())
+        .database(&db_name);
+
+    if is_use_ssl {
+        let options = options
             .ssl_mode(sqlx::mysql::MySqlSslMode::Required)
             .ssl_ca_from_pem(vec![])
             .ssl_client_cert_from_pem(cert_file().as_bytes())
-            .ssl_client_key_from_pem(key_file().as_bytes())
-            .username(user)
-            .password(password)
-            .host(host)
-            .port(port.parse::<u16>().unwrap())
-            .database(db_name);
+            .ssl_client_key_from_pem(key_file().as_bytes());
+        Ok(MySqlPool::connect_with(options)
+            .await
+            .expect("Could not connect to database with ssl"))
+    } else {
         Ok(MySqlPool::connect_with(options)
             .await
             .expect("Could not connect to database"))
@@ -550,17 +517,26 @@ async fn delete_shopping_list_item(id: i32) {
 
 #[derive(Debug, Deserialize, Serialize)]
 struct AppConfig {
+    db_host: String,
     db_name: String,
-    db_url: String,
+    db_user: String,
+    db_password: String,
+    db_port: String,
+    is_use_ssl: bool,
 }
 
 #[tauri::command]
-async fn update_app_config(db_url: String) {
-    let app_config = AppConfig {
-        db_url: db_url.clone(),
-        db_name: "".into(),
-    };
-    let app_config_json = serde_json::to_value(&app_config).unwrap();
+async fn update_app_config(app_config: AppConfig) {
+    // get current app_config and create new
+    let mut new_app_config = get_app_config().await;
+    new_app_config.db_user = app_config.db_user;
+    new_app_config.db_host = app_config.db_host;
+    new_app_config.db_name = app_config.db_name;
+    new_app_config.db_password = app_config.db_password;
+    new_app_config.db_port = app_config.db_port;
+    new_app_config.is_use_ssl = app_config.is_use_ssl;
+
+    let app_config_json = serde_json::to_string(&new_app_config).unwrap();
     let file = File::create(
         config_dir()
             .expect("could not get config dir")
@@ -568,7 +544,7 @@ async fn update_app_config(db_url: String) {
     )
     .unwrap();
     let _ = serde_json::to_writer_pretty(file, &app_config_json);
-    println!("appconfig: {:?}", app_config);
+    println!("appconfig: {:?}", new_app_config);
     println!(
         "appconfig location: {}",
         config_dir()
@@ -577,7 +553,7 @@ async fn update_app_config(db_url: String) {
             .to_str()
             .unwrap()
     );
-    check_or_create_db().await;
+    // check_or_create_db().await;
 }
 
 #[tauri::command]
