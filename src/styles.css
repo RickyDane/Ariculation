@@ -350,6 +350,8 @@ body {
 	margin: auto;
 	width: 500px;
 	height: fit-content;
+	max-height: 90vh;
+	overflow-y: auto;
 	background-color: #1f2124;
 	border-radius: 10px;
 	padding: 20px;

@@ -52,6 +52,8 @@ struct Item {
     is_visible_on_user: bool,
     user_id: i32,
     list_type: i32,
+    time_added: String,
+    last_modified: String
 }
 #[derive(Debug, Serialize, sqlx::FromRow)]
 struct User {
@@ -75,7 +77,6 @@ struct List {
 
 #[tauri::command]
 async fn check_or_create_db() {
-    unsafe {
         let _ = create_dir(
             config_dir()
                 .unwrap()
@@ -121,7 +122,7 @@ async fn check_or_create_db() {
             .unwrap_or_default();
             let conn = get_db_connection().await.unwrap();
             // create tables if not exists
-            sqlx::query("CREATE TABLE tbl_items (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), category VARCHAR(255), description TEXT, price FLOAT, is_split BOOLEAN, is_joint BOOLEAN, user_id INT, last_modified VARCHAR(255), is_visible_on_user BOOLEAN, visible_on_user_list BOOLEAN, list_type INT, PRIMARY KEY (id))")
+            sqlx::query("CREATE TABLE tbl_items (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), category VARCHAR(255), description TEXT, price FLOAT, is_split BOOLEAN, is_joint BOOLEAN, user_id INT, last_modified VARCHAR(255), time_added VARCHAR(255), is_visible_on_user BOOLEAN, visible_on_user_list BOOLEAN, list_type INT, PRIMARY KEY (id))")
                 .execute(&conn)
                 .await
                 .unwrap_or_default();
@@ -139,7 +140,6 @@ async fn check_or_create_db() {
                 .unwrap_or_default();
             println!("Database created successfully");
         }
-    }
 }
 
 fn cert_file() -> String {
@@ -157,12 +157,6 @@ async fn get_db_connection() -> Result<MySqlPool, Error> {
     let port = app_config.db_port;
     let db_name = app_config.db_name;
     let is_use_ssl = app_config.is_use_ssl;
-
-    println!("user: {}", user);
-    println!("password: {}", password);
-    println!("host: {}", host);
-    println!("port: {}", port);
-    println!("db_name: {}", db_name);
 
     let options = sqlx::mysql::MySqlConnectOptions::new()
         .username(&user)
@@ -201,14 +195,15 @@ async fn add_item(
     visible_on_user_list: i32,
 ) {
     let conn = get_db_connection().await.unwrap();
-    sqlx::query("INSERT INTO tbl_items (name, category, description, price, is_split, is_joint, user_id, last_modified, is_visible_on_user, list_type, visible_on_user_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO tbl_items (name, category, description, price, is_split, is_joint, user_id, last_modified, time_added, is_visible_on_user, list_type, visible_on_user_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(name)
         .bind(category)
-        .bind(description)
+        .bind(description) 
         .bind(price.parse::<f32>().unwrap())
         .bind(is_split)
         .bind(is_joint)
         .bind(user_id)
+        .bind(Local::now().to_string())
         .bind(Local::now().to_string())
         .bind(is_visible_on_user)
         .bind(list_type)

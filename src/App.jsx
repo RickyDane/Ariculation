@@ -485,6 +485,7 @@ function App() {
 								<th>Price</th>
 								<th>User</th>
 								<th>Split</th>
+								<th>Added</th>
 								<th>Actions</th>
 							</tr>
 						</thead>
@@ -509,6 +510,7 @@ function App() {
 													.replace(".", ",")
 											: "-"}
 									</td>
+									<td>{item.time_added.split(".")[0]}</td>
 									<td>
 										<div className="item-action-buttons">
 											<button
