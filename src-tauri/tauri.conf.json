@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "Ariculation",
-    "version": "0.4.0"
+    "version": "0.4.5"
   },
   "tauri": {
     "allowlist": {
@@ -25,9 +25,11 @@
         "fullscreen": false,
         "resizable": true,
         "title": "Ariculation",
-        "width": 900,
-        "height": 600,
-        "transparent": false
+        "width": 1100,
+        "height": 800,
+        "transparent": false,
+        "hiddenTitle": true,
+        "titleBarStyle": "overlay"
       }
     ],
     "security": {
